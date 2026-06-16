@@ -41,23 +41,27 @@ class VisionBackend(Protocol):
         ...
 
 
-def _extract_image(action: Action) -> bytes | None:
-    """Find image bytes in the action: metadata image_bytes/image_path, or output dict."""
+def _extract_image(action: Action, allow_path_read: bool = False) -> bytes | None:
+    """Find image bytes in the action.
+
+    Inline ``image_bytes`` (in metadata or the agent ``output`` dict) is always honored.
+    A filesystem ``image_path`` is read **only** when ``allow_path_read`` is explicitly enabled —
+    otherwise an untrusted agent response could point at an arbitrary local file (LFI). When
+    enabled, the path is resolved and confirmed to be a regular file.
+    """
     meta = action.metadata or {}
     if isinstance(meta.get("image_bytes"), (bytes, bytearray)):
         return bytes(meta["image_bytes"])
-    path = meta.get("image_path")
-    if path and os.path.exists(path):
-        with open(path, "rb") as fh:
-            return fh.read()
     out = meta.get("output")
     if isinstance(out, dict):
         for key in ("image_bytes", "pixels"):
             val = out.get(key)
             if isinstance(val, (bytes, bytearray)):
                 return bytes(val)
-        if out.get("path") and os.path.exists(out["path"]):
-            with open(out["path"], "rb") as fh:
+    if allow_path_read:
+        path = meta.get("image_path") or (out.get("path") if isinstance(out, dict) else None)
+        if path and os.path.isfile(path):
+            with open(path, "rb") as fh:
                 return fh.read()
     return None
 
@@ -180,15 +184,17 @@ class ImageModerationScanner:
         self,
         backend: str | VisionBackend = "null",
         applies_to_kinds: tuple[str, ...] = ("generate_image", "generate_video"),
+        allow_path_read: bool = False,
         **backend_params,
     ) -> None:
         self.backend: VisionBackend = build_vision_backend(backend, **backend_params) if isinstance(backend, str) else backend
         self.applies_to_kinds = applies_to_kinds
+        self.allow_path_read = allow_path_read
 
     def scan(self, action: Action, context: Context) -> Verdict:
         if action.kind not in self.applies_to_kinds:
             return Verdict.from_score(self.name, 0.9, "not an image/video node; skipped")
-        image = _extract_image(action)
+        image = _extract_image(action, allow_path_read=self.allow_path_read)
         if image is None:
             return Verdict.from_score(self.name, 0.85, "no image data available to moderate")
         result = self.backend.moderate(image)

@@ -25,7 +25,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
-from .base import tokenize
+from .normalize import find_terms
 
 logger = logging.getLogger("safetynet.scanners.moderation")
 
@@ -69,12 +69,9 @@ class KeywordBackend:
         self.unsafe_terms = {k.lower(): float(v) for k, v in (unsafe_terms or DEFAULT_UNSAFE_TERMS).items()}
 
     def classify(self, text: str) -> ModerationResult:
-        low = text.lower()
-        hits = {term: w for term, w in self.unsafe_terms.items() if term in low}
-        token_set = set(tokenize(text))
-        for term, w in self.unsafe_terms.items():
-            if " " not in term and term in token_set:
-                hits[term] = w
+        # find_terms folds away obfuscation (homoglyphs, zero-width, leetspeak, spacing, Base64).
+        matched = find_terms(text, list(self.unsafe_terms))
+        hits = {term: self.unsafe_terms[term] for term in matched}
         if not hits:
             return ModerationResult(unsafe_score=0.05, categories=[], detail="no unsafe content terms detected")
         worst = max(hits.values())

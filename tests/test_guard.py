@@ -50,3 +50,35 @@ def test_unsafe_agent_response_blocked_at_post(policy, tmp_path, monkeypatch):
     assert result.allowed is False          # but its unsafe reply is caught at post
     assert result.blocked_stage == "post"
     assert result.response is None          # withheld
+
+
+def test_upstream_error_fails_closed(policy, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    class ExplodingClient:
+        name = "boom"
+
+        def invoke(self, request):
+            raise RuntimeError("connection refused")
+
+    guarded = build_guarded_agent(policy, ExplodingClient())
+    result = guarded.invoke("a perfectly benign prompt")
+    assert result.allowed is False          # a failing upstream must not fail open
+    assert result.blocked_stage == "upstream"
+    assert result.response is None
+
+
+def test_flag_and_human_review_wiring(policy, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    # An email triggers the PII scanner's FLAG (not a block): allowed but flagged.
+    guarded = build_guarded_agent(policy, StubAgentClient())
+    result = guarded.invoke("you can reach me at jane.doe@example.com")
+    assert result.allowed is True
+    assert result.flagged is True
+    assert result.needs_review is False     # default policy has human_review_on_flag: false
+
+    # Flip the policy knob -> the same flag now requests human review.
+    policy.human_review_on_flag = True
+    guarded2 = build_guarded_agent(policy, StubAgentClient())
+    result2 = guarded2.invoke("you can reach me at jane.doe@example.com")
+    assert result2.flagged is True and result2.needs_review is True

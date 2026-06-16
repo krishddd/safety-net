@@ -41,6 +41,7 @@ from .moderation import (
     TransformersGuardBackend,
     build_backend,
 )
+from .pii import PIIScanner
 from .prompt_injection import PromptInjectionScanner
 
 __all__ = [
@@ -50,6 +51,7 @@ __all__ = [
     "PromptInjectionScanner",
     "CharacterBibleScanner",
     "ImageModerationScanner",
+    "PIIScanner",
     # content-safety moderation backends
     "ModerationBackend",
     "ModerationResult",

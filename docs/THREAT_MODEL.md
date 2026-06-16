@@ -18,14 +18,15 @@ response — and never trusts the agent to police itself.
 
 | # | Threat (OWASP LLM / agent) | Where it hits | SafetyNet defense |
 |---|---|---|---|
-| 1 | **Prompt injection** (direct & indirect) | Script/Image/Video input | `PromptInjectionScanner` (→ LlamaFirewall PromptGuard) at PRE gate |
-| 2 | **Insecure output handling** | Script→Image hand-off | POST-stage gate re-scans every node output before it becomes the next input |
-| 3 | **Sensitive-info / IP disclosure** | Image/Video prompts | `CopyrightScanner` (→ GoG arXiv:2503.16171 / CopyJudge arXiv:2502.15278) |
+| 1 | **Prompt injection** (direct & indirect) | request (any message) | `PromptInjectionScanner` (→ PromptGuard) at PRE; the gateway guards the **whole** message list |
+| 1b | **Guardrail evasion** (homoglyph / zero-width / tag / leet / base64) | request & response | `scanners/normalize.py` folds obfuscation away before matching (arXiv:2504.11168) |
+| 2 | **Insecure output handling** | agent response | POST-stage gate re-scans the agent reply before it is returned |
+| 3 | **Sensitive-info / IP disclosure** | request & response | `CopyrightScanner` (→ GoG/CopyJudge) + `PIIScanner` (secrets→BLOCK, PII→FLAG) |
 | 4 | **Harmful content generation** | All nodes | `ContentSafetyScanner` (→ LlamaGuard/ShieldGemma) + consequentialism harm model |
 | 5 | **Excessive agency / out-of-policy acts** | Any agent | Deontology duties + `deontology_veto` stance (least-privilege intent) |
 | 6 | **Multi-agent cascade failure** | chained external agents | Circuit breaker halts before the next guarded call (NetSafe / G-Safeguard) |
 | 7 | **Misalignment / goal drift** | Across the trace | Cumulative-risk circuit breaker over the run's accumulated FLAGs |
-| 8 | **Policy bypass / silent failure** | Scanner/framework error | **Fail-closed**: errors become BLOCK (or configured FLAG), never silent ALLOW |
+| 8 | **Policy bypass / silent failure** | scanner/framework error, **upstream agent error** | **Fail-closed**: scanner errors → BLOCK/FLAG; an upstream transport/HTTP error → BLOCK at the `upstream` stage, never silent ALLOW |
 | 9 | **Non-repudiation / audit gaps** | Compliance | JSONL audit log with `policy_hash` + content hashes (EU AI Act, NIST AI RMF) |
 | 10 | **Config tampering / drift** | Policy file | `policy_hash` records the exact resolved rules; runs are reconstructable |
 
@@ -36,11 +37,16 @@ response — and never trusts the agent to police itself.
   hashed so any change is detectable in the audit trail.
 - Scanners/frameworks are **fail-closed**: a crash is treated as the unsafe outcome.
 
-## Residual risk (Phase 1)
+## Residual risk
 
-- Stub scanners are keyword/similarity heuristics — they catch the documented trigger classes but
-  are not production detectors. Swap in the referenced models before any real deployment.
-- No in-execution (mid-generation) monitoring yet; streaming attacks that only manifest mid-stream
-  are out of scope until the `in` stage lands (see [ARCHITECTURE.md](ARCHITECTURE.md)).
-- Adversarial robustness of the stubs is untested; use the benchmarks in
-  [CONCEPTS.md](CONCEPTS.md) (R-Judge, Agent-SafetyBench, the copyright benchmark) before trusting.
+- Default scanners are keyword/similarity heuristics hardened with obfuscation folding. They catch
+  the documented character-injection classes, but **semantic** paraphrase/adversarial-ML attacks
+  that preserve meaning without trigger terms need a model backend — enable `[guard]` (PromptGuard /
+  LlamaGuard) and `[embeddings]` (GoG) before any real deployment.
+- Normalization covers the common evasions (homoglyph, zero-width, tag/emoji smuggling, full-width,
+  diacritics, leetspeak, intra-letter spacing, single-layer Base64). Nested multi-layer encodings
+  and novel confusables outside the curated map can still slip the keyword stubs.
+- No mid-generation / streaming-response monitoring yet (the proxy guards the full response once
+  received). Token-level/SSE guarding is deferred.
+- PII detection is regex-based (conservative, Luhn-checked cards); swap in Presidio / cloud DLP for
+  coverage. Validate with the benchmarks in [CONCEPTS.md](CONCEPTS.md) before trusting in production.

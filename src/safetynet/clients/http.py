@@ -60,7 +60,12 @@ class HTTPAgentClient:
 
 
 def _openai_request(request: AgentRequest, model: str) -> dict:
-    return {"model": model, "messages": [{"role": "user", "content": request.prompt}]}
+    # Forward the full conversation when the caller provides it (preserves multi-turn context);
+    # otherwise wrap the single prompt.
+    messages = (request.metadata or {}).get("messages")
+    if not messages:
+        messages = [{"role": "user", "content": request.prompt}]
+    return {"model": model, "messages": messages}
 
 
 def _openai_parse(data: dict) -> str:

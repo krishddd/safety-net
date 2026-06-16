@@ -15,19 +15,35 @@ import logging
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
+from .normalize import find_terms
+
 logger = logging.getLogger("safetynet.scanners.injection_backends")
 
 DEFAULT_INJECTION_PATTERNS: list[str] = [
     "ignore previous instructions",
     "ignore all previous",
+    "ignore the above",
     "disregard the above",
     "disregard previous",
+    "disregard all prior",
+    "forget previous instructions",
+    "forget everything",
     "reveal your system prompt",
+    "print your system prompt",
+    "repeat the words above",
     "you are now",
+    "act as",
+    "pretend you are",
     "developer mode",
+    "dan mode",
     "jailbreak",
     "do anything now",
+    "without any restrictions",
+    "ignore your guidelines",
     "override your guidelines",
+    "bypass your safety",
+    "new instructions:",
+    "system prompt:",
 ]
 
 
@@ -55,8 +71,8 @@ class PatternBackend:
         self.patterns = [p.lower() for p in (patterns or DEFAULT_INJECTION_PATTERNS)]
 
     def detect(self, text: str) -> InjectionResult:
-        low = text.lower()
-        hits = [p for p in self.patterns if p in low]
+        # find_terms folds away homoglyphs, zero-width chars, leetspeak, spacing, and Base64.
+        hits = find_terms(text, self.patterns)
         if hits:
             return InjectionResult(risk=0.95, matched=hits, detail=f"injection patterns: {hits}")
         return InjectionResult(risk=0.04, detail="no injection patterns detected")

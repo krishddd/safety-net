@@ -24,7 +24,7 @@ from .core.circuit_breaker import CircuitBreaker
 from .core.gate import Gate
 from .core.policy import PolicyConfig
 from .core.tracing import NullTracer, Tracer
-from .core.types import Action, Context, NodeResult, Stage
+from .core.types import Action, Context, Decision, NodeResult, Stage, Verdict
 from .ethics.aggregator import Aggregator
 from .ethics.consequentialism import ConsequentialismFramework
 from .ethics.deontology import DeontologyFramework
@@ -33,6 +33,7 @@ from .scanners.character_bible import CharacterBibleScanner
 from .scanners.content_safety import ContentSafetyScanner
 from .scanners.copyright import CopyrightScanner
 from .scanners.image_moderation import ImageModerationScanner
+from .scanners.pii import PIIScanner
 from .scanners.prompt_injection import PromptInjectionScanner
 
 logger = logging.getLogger("safetynet.guard")
@@ -44,6 +45,7 @@ SCANNER_REGISTRY = {
     "prompt_injection": PromptInjectionScanner,
     "character_bible": CharacterBibleScanner,
     "image_moderation": ImageModerationScanner,
+    "pii": PIIScanner,
 }
 
 
@@ -82,11 +84,13 @@ def build_scanners(policy: PolicyConfig) -> list[tuple[Any, Any]]:
 class GuardResult:
     run_id: str
     allowed: bool
-    blocked_stage: str | None = None          # "pre" | "post" | None
+    blocked_stage: str | None = None          # "pre" | "post" | "upstream" | None
     halt_reason: str | None = None
     response: AgentResponse | None = None      # the agent reply, when allowed
     audit_path: str = ""
     node_results: list[NodeResult] = field(default_factory=list)
+    flagged: bool = False                      # any stage returned FLAG
+    needs_review: bool = False                 # flagged AND policy.human_review_on_flag
 
 
 class GuardedAgent:
@@ -131,8 +135,21 @@ class GuardedAgent:
         if halt:
             return self._finish(result, breaker, blocked_stage="pre")
 
-        # --- call the external agent ---------------------------------------------------------
-        response = self.client.invoke(AgentRequest(prompt=prompt, metadata=metadata or {}))
+        # --- call the external agent (fail-closed on transport/HTTP errors) -------------------
+        try:
+            response = self.client.invoke(AgentRequest(prompt=prompt, metadata=metadata or {}))
+        except Exception as exc:  # noqa: BLE001 — a failing upstream must not fail open
+            logger.exception("upstream agent error; failing closed")
+            err = NodeResult(
+                node_id=self.node_id,
+                stage=Stage.POST,
+                aggregate=Verdict.from_score(self.node_id, 0.0, f"upstream agent error (fail-closed): {exc}"),
+            )
+            result.node_results.append(err)
+            breaker.observe(err)
+            audit.record(err, input_payload=prompt, output_payload=None, breaker_state=breaker.state())
+            self.tracer.record(err, breaker.state())
+            return self._finish(result, breaker, blocked_stage="upstream")
 
         # --- POST: guard the agent's response ------------------------------------------------
         post_meta = {"output": response.raw, **(response.metadata or {})}
@@ -154,9 +171,21 @@ class GuardedAgent:
         result.allowed = blocked_stage is None
         result.blocked_stage = blocked_stage
         result.halt_reason = breaker.halt_reason
+        result.flagged = any(nr.aggregate.decision is Decision.FLAG for nr in result.node_results)
+        result.needs_review = result.flagged and self.policy.human_review_on_flag
         if blocked_stage:
             logger.warning("SafetyNet blocked at %s stage: %s", blocked_stage, breaker.halt_reason)
-        self.tracer.end_run({"allowed": result.allowed, "blocked_stage": blocked_stage, "halt_reason": result.halt_reason})
+        elif result.needs_review:
+            logger.info("SafetyNet allowed with FLAG -> queued for human review (run %s)", result.run_id)
+        self.tracer.end_run(
+            {
+                "allowed": result.allowed,
+                "blocked_stage": blocked_stage,
+                "halt_reason": result.halt_reason,
+                "flagged": result.flagged,
+                "needs_review": result.needs_review,
+            }
+        )
         return result
 
 

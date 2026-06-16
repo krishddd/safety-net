@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
 from .base import jaccard, shingles, tokenize
+from .normalize import find_terms, normalize
 
 logger = logging.getLogger("safetynet.scanners.copyright_backends")
 
@@ -57,12 +58,12 @@ class JaccardBackend:
         self._protected_shingles = [shingles(tokenize(t), n=2) for t in self.protected_terms]
 
     def detect(self, text: str) -> CopyrightResult:
-        low = text.lower()
-        named = [t for t in self.protected_terms if t in low]
+        # Obfuscation-resistant verbatim-name match (homoglyphs/zero-width/spacing/Base64).
+        named = find_terms(text, self.protected_terms)
         if named:
             return CopyrightResult(risk=0.92, matched=named[0], detail=f"protected IP named verbatim: {named}")
 
-        payload_sh = shingles(tokenize(text), n=2)
+        payload_sh = shingles(tokenize(normalize(text)), n=2)
         best, best_term = 0.0, None
         for term, sh in zip(self.protected_terms, self._protected_shingles, strict=True):
             sim = jaccard(payload_sh, sh)

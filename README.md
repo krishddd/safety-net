@@ -93,7 +93,8 @@ else:
 src/safetynet/
   core/        types (band/Verdict/Action/Context), policy, gate, circuit_breaker, audit, tracing, logging
   ethics/      deontology, consequentialism, aggregator (stances), engine
-  scanners/    content_safety, copyright, prompt_injection, character_bible, image_moderation (+ pluggable backends)
+  scanners/    content_safety, copyright, prompt_injection, pii, character_bible, image_moderation
+               (+ pluggable backends; normalize.py defeats character-injection evasion)
   clients/     AgentClient, StubAgentClient, HTTP/OpenAI clients, presets (nemo/langgraph/dify/crewai)
   guard.py     GuardedAgent gateway + build_guarded_agent()
   server/      FastAPI gateway app (/health, /guard, /v1/chat/completions)
@@ -106,9 +107,18 @@ Dockerfile · docker-compose.yml
 ## Design guarantees
 
 - **No generation** — SafetyNet only inspects and gates; agents stay external and untrusted.
-- **Fail-closed** — a scanner/framework that raises becomes a `BLOCK`, never a silent `ALLOW`.
+- **Fail-closed everywhere** — a scanner/framework that raises *and* an upstream agent that errors
+  both become a `BLOCK`, never a silent `ALLOW`.
+- **Evasion-resistant matching** — keyword/pattern scanners fold away homoglyphs, zero-width and
+  Unicode-tag characters, full-width text, diacritics, leetspeak, intra-letter spacing, and Base64
+  before matching (defends the character-injection attacks of arXiv:2504.11168).
+- **PII / secret leakage** — a dedicated scanner blocks credential leaks (API/AWS/private keys)
+  and flags PII (email, phone, SSN, Luhn-checked cards) on both request and response.
+- **Whole-conversation guarding** — the OpenAI proxy evaluates the entire message list (not just
+  the last turn), so indirect injection hidden in a system or earlier message is still caught.
 - **Unconditional halt on hard block** — a `BLOCK` short-circuits the circuit breaker
-  immediately, even at zero accumulated risk; only `FLAG`s feed the cumulative threshold.
+  immediately; only `FLAG`s feed the cumulative threshold. `FLAG` + `human_review_on_flag` marks
+  a result `needs_review` for a human queue.
 - **Reconstructable audit** — every decision is logged with the `policy_hash` in effect and
   content referenced by sha256 (EU AI Act Art. 13/14; NIST AI RMF).
 

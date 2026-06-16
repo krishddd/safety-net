@@ -40,7 +40,9 @@ scanners:                         # each: enabled + per-scanner fail_mode (BLOCK
   content_safety:   { enabled: true, fail_mode: BLOCK }
   copyright:        { enabled: true, fail_mode: BLOCK }
   prompt_injection: { enabled: true, fail_mode: BLOCK }
+  pii:              { enabled: true, fail_mode: BLOCK }   # secrets -> BLOCK, plain PII -> FLAG
   character_bible:  { enabled: true, fail_mode: FLAG }
+  # image_moderation: { enabled: true, fail_mode: BLOCK, backend: null }  # enable for image/video agents
 
 character_bible_ref: policies/character_bible.yaml
 

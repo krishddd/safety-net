@@ -108,19 +108,18 @@ def guard(req: GuardRequest) -> dict:
     }
 
 
-def _last_user_message(messages: list[ChatMessage]) -> str:
-    for m in reversed(messages):
-        if m.role == "user":
-            return m.content
-    return messages[-1].content if messages else ""
-
-
 @app.post("/v1/chat/completions")
 def chat_completions(req: ChatRequest) -> dict:
-    """OpenAI-compatible proxy: guard the prompt, forward to upstream, guard the response."""
+    """OpenAI-compatible proxy: guard the conversation, forward to upstream, guard the response.
+
+    The guard evaluates the **entire** message list (not just the last user turn), so indirect
+    injection hidden in a system message or an earlier turn is still caught. The full message
+    list is forwarded to the upstream so multi-turn context is preserved.
+    """
     st = _state()
-    prompt = _last_user_message(req.messages)
-    result = st["guarded"].invoke(prompt)
+    messages = [{"role": m.role, "content": m.content} for m in req.messages]
+    guard_text = "\n".join(m.content for m in req.messages)
+    result = st["guarded"].invoke(guard_text, metadata={"messages": messages})
 
     if result.allowed and result.response is not None:
         content = result.response.text
@@ -138,6 +137,8 @@ def chat_completions(req: ChatRequest) -> dict:
             "allowed": result.allowed,
             "blocked_stage": result.blocked_stage,
             "halt_reason": result.halt_reason,
+            "flagged": result.flagged,
+            "needs_review": result.needs_review,
             "run_id": result.run_id,
             "audit_path": result.audit_path,
         },

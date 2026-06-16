@@ -27,13 +27,13 @@ generate content. The position (governance outside the agent) follows *From Craf
 | Shared types | `core/types.py` | `Decision`, `band()`, `Verdict`, `Action`, `Context`, `NodeResult`, `Stage` |
 | Policy | `core/policy.py` | Load + validate YAML, normalize weights, compute `policy_hash` |
 | Ethics engine | `ethics/` | Pluggable frameworks + stance-based aggregator |
-| Scanners | `scanners/` | Content / IP / injection / structure / image checks (pluggable backends) |
+| Scanners | `scanners/` | Content / IP / injection / PII / structure / image checks (pluggable backends); `normalize.py` defeats character-injection evasion |
 | Gate | `core/gate.py` | Run scanners + ethics at PRE/POST; fail-closed; strictest combine |
 | Circuit breaker | `core/circuit_breaker.py` | Per-run cumulative risk; unconditional halt on BLOCK |
 | Audit | `core/audit.py` | JSONL decision log, content referenced by sha256 |
 | Tracing | `core/tracing.py` | Optional observability (NullTracer default; LangfuseTracer) |
 | Agent clients | `clients/` | Transport to external agent REST endpoints (+ offline stub) |
-| Guard | `guard.py` | `GuardedAgent`: PRE → call client → POST, around breaker/audit/tracer |
+| Guard | `guard.py` | `GuardedAgent`: PRE → call client → POST, around breaker/audit/tracer; **fails closed if the upstream agent errors** (blocks at the `upstream` stage) |
 | Gateway | `server/app.py` | FastAPI service exposing the guard over HTTP |
 
 ## What SafetyNet does NOT contain
