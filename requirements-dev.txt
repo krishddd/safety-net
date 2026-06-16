@@ -1,0 +1,5 @@
+# Development / CI dependencies.
+-r requirements.txt
+pytest>=7.4
+ruff>=0.5
+# Optional: enable the LangGraph adapter locally with `pip install langgraph`.

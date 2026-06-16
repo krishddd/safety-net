@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# SynemaGuard runtime artifacts (keep the folders, ignore their contents)
+output/*.jsonl
+logs/*.log
+logs/*.log.*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

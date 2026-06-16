@@ -1,0 +1,16 @@
+# The project's "character bible" — canonical cast and hard constraints for the Cartoon Movie.
+# Loaded into Context and consumed by the CharacterBibleScanner (and available to all evaluators).
+title: "The Clockwork Meadow"
+characters:
+  - Pip
+  - Wren
+  - Mayor Thistle
+  - Old Bramble
+banned_traits:
+  - graphic violence
+  - cruelty to animals
+  - romantic subplots involving minors
+tone:
+  - whimsical
+  - gentle
+  - hopeful
