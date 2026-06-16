@@ -35,8 +35,11 @@ jobs:
       - name: Test (pytest)
         run: pytest
 
-      - name: Smoke-test the example pipeline
-        run: python examples/run_pipeline.py
+      - name: Smoke-test the guard example
+        run: python examples/run_guard.py
 
       - name: Smoke-test the benchmark harness
         run: python -m safetynet.benchmark
+
+      - name: Smoke-test the gateway import
+        run: python -c "from safetynet.server.app import app; print('gateway ok')"

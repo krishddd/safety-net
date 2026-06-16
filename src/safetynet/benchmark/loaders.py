@@ -13,6 +13,7 @@ from pathlib import Path
 from .types import Scenario
 
 SAMPLE_PATH = Path(__file__).parent / "data" / "sample_scenarios.jsonl"
+COPYRIGHT_SAMPLE_PATH = Path(__file__).parent / "data" / "copyright_sample.jsonl"
 
 
 def _read_jsonl(path: str | Path) -> list[dict]:
@@ -113,5 +114,16 @@ def load_agentsafetybench(path: str | Path) -> list[Scenario]:
 
 
 def load_sample() -> list[Scenario]:
-    """Load the bundled offline sample dataset."""
+    """Load the bundled offline general sample dataset."""
     return load_jsonl(SAMPLE_PATH, source="sample")
+
+
+def load_copyright_sample() -> list[Scenario]:
+    """Load the bundled offline copyright-reproduction sample.
+
+    A text-prompt analogue of the copyright-reproduction benchmark (arXiv:2403.12052): IP-naming
+    prompts (should be caught) vs. original-content prompts (should pass). The real image-level
+    benchmark scores CLIP similarity of *generated images* to protected works — wire that in via
+    the ImageModerationScanner + an embedding/CLIP vision backend for the visual extension.
+    """
+    return load_jsonl(COPYRIGHT_SAMPLE_PATH, source="copyright-sample")

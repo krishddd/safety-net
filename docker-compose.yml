@@ -1,0 +1,35 @@
+# SafetyNet gateway in front of an external agent container.
+#
+# 1. Pull/run your agent image (NeMo Guardrails, LangGraph Server, Dify, or a CrewAI FastAPI
+#    wrapper) as a service on this network.
+# 2. Point SafetyNet at it via UPSTREAM_TYPE + UPSTREAM_URL.
+# 3. Send traffic to SafetyNet (:8000), not to the agent directly.
+#
+# With no upstream configured, SafetyNet runs against a built-in stub agent so you can test the
+# security pipeline (prompt injection, IP, harmful content) immediately.
+
+services:
+  safetynet:
+    build: .
+    image: safetynet-gateway:latest
+    ports:
+      - "8000:8000"
+    environment:
+      POLICY_PATH: /app/policies/default.yaml
+      UPSTREAM_TYPE: stub          # stub | nemo | openai | langgraph | dify | crewai
+      # UPSTREAM_URL: http://nemo:8000
+      # UPSTREAM_MODEL: gpt-3.5-turbo
+      # UPSTREAM_API_KEY: ${UPSTREAM_API_KEY}
+    # depends_on:
+    #   - nemo
+
+  # --- Example upstream agent (uncomment + adapt to the image you pull) ----------------------
+  # nemo:
+  #   image: nemoguardrails:latest
+  #   command: chat --config=/config
+  #   volumes:
+  #     - ./your-nemo-config:/config
+  #   environment:
+  #     OPENAI_API_KEY: ${OPENAI_API_KEY}
+  #   ports:
+  #     - "8001:8000"

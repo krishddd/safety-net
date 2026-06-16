@@ -12,6 +12,27 @@ from .base import Scanner
 from .character_bible import CharacterBibleScanner
 from .content_safety import ContentSafetyScanner
 from .copyright import CopyrightScanner
+from .copyright_backends import (
+    CopyrightBackend,
+    EmbeddingCopyrightBackend,
+    JaccardBackend,
+    build_copyright_backend,
+)
+from .image_moderation import (
+    AzureVisionBackend,
+    ImageModerationScanner,
+    NullVisionBackend,
+    RekognitionBackend,
+    TransformersNSFWBackend,
+    VisionBackend,
+    build_vision_backend,
+)
+from .injection_backends import (
+    InjectionBackend,
+    PatternBackend,
+    PromptGuardBackend,
+    build_injection_backend,
+)
 from .moderation import (
     AnthropicModerationBackend,
     KeywordBackend,
@@ -28,11 +49,29 @@ __all__ = [
     "CopyrightScanner",
     "PromptInjectionScanner",
     "CharacterBibleScanner",
-    # moderation backends
+    "ImageModerationScanner",
+    # content-safety moderation backends
     "ModerationBackend",
     "ModerationResult",
     "KeywordBackend",
     "TransformersGuardBackend",
     "AnthropicModerationBackend",
     "build_backend",
+    # copyright backends
+    "CopyrightBackend",
+    "JaccardBackend",
+    "EmbeddingCopyrightBackend",
+    "build_copyright_backend",
+    # injection backends
+    "InjectionBackend",
+    "PatternBackend",
+    "PromptGuardBackend",
+    "build_injection_backend",
+    # vision backends
+    "VisionBackend",
+    "NullVisionBackend",
+    "AzureVisionBackend",
+    "RekognitionBackend",
+    "TransformersNSFWBackend",
+    "build_vision_backend",
 ]

@@ -37,7 +37,7 @@ below was verified to resolve and to match its described use (see "Citation note
 | Per-node monitoring / corrupted-node isolation | *Securing MAS via Node Contribution Backpropagation* (arXiv:2510.19420, ICML 2026) | Per-node `observe()` before downstream propagation |
 | Topological cascade risk | *NetSafe* (arXiv:2410.15686), *G-Safeguard* (arXiv:2502.11127, ACL 2025) | Halt-before-downstream stops cascades |
 | Trace-level safety contracts | Invariant Labs | Cumulative-risk breaker over the run trace |
-| Audit / observability | Langfuse | JSONL audit log (Langfuse is the future backend) |
+| Audit / observability | Langfuse | JSONL audit log + `LangfuseTracer` (`core/tracing.py`, `[langfuse]`) |
 
 ## Governance & compliance
 

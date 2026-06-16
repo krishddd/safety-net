@@ -8,7 +8,7 @@ from collections.abc import Callable
 from ..core.gate import Gate
 from ..core.policy import PolicyConfig
 from ..core.types import Action, Context, NodeResult, Stage
-from ..pipeline import build_ethics_engine, build_scanners
+from ..guard import build_ethics_engine, build_scanners
 from .types import BenchmarkReport, Scenario, ScenarioResult
 
 logger = logging.getLogger("safetynet.benchmark")

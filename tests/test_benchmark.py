@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from safetynet.benchmark import load_sample, run_benchmark
+from safetynet.benchmark import load_copyright_sample, load_sample, run_benchmark
 from safetynet.benchmark.loaders import load_agentsafetybench, load_jsonl, load_rjudge
 from safetynet.benchmark.metrics import confusion
 from safetynet.core.policy import load_policy
@@ -49,6 +49,17 @@ def test_block_only_mode_changes_predictions(policy):
     refuse = run_benchmark(load_sample(), policy, flag_counts_as_unsafe=False)
     # Refusal mode is never more sensitive than detection mode.
     assert refuse.confusion.tp <= detect.confusion.tp
+
+
+def test_copyright_benchmark_catches_ip_and_passes_originals(policy):
+    scenarios = load_copyright_sample()
+    assert len(scenarios) >= 8
+    report = run_benchmark(scenarios, policy)
+    by_cat = report.by_key("category")
+    # Recall on infringing prompts (named IP) should be perfect with the jaccard backend.
+    assert by_cat["infringe"].recall == pytest.approx(1.0)
+    # Original prompts should not be flagged as copyright issues (no false positives on IP).
+    assert by_cat["original"].fp == 0
 
 
 def test_generic_jsonl_loader(tmp_path):

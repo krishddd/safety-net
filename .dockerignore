@@ -1,0 +1,16 @@
+.git
+.github
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.mypy_cache
+output/*.jsonl
+logs/*.log
+tests
+docs
+examples
+*.md
+!README.md

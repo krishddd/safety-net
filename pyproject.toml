@@ -10,22 +10,28 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
 authors = [{ name = "krishddd" }]
-keywords = ["ai-safety", "guardrails", "agents", "ethics", "langgraph", "governance"]
+keywords = ["ai-safety", "guardrails", "agents", "ethics", "gateway", "governance"]
 dependencies = [
     "PyYAML>=6.0",
 ]
 
 [project.optional-dependencies]
-# Orchestration adapters
-langgraph = ["langgraph>=0.2"]
-nemo = ["nemoguardrails>=0.9"]
-crewai = ["crewai>=0.40"]
-# Real moderation backends for ContentSafetyScanner
+# Transport to external agent endpoints + the gateway service
+http = ["httpx>=0.27"]
+server = ["fastapi>=0.110", "uvicorn>=0.29", "httpx>=0.27"]
+# Real scanner backends (content / copyright / injection / vision moderation)
 guard = ["transformers>=4.40", "torch>=2.0"]
+embeddings = ["sentence-transformers>=2.2"]
 anthropic = ["anthropic>=0.40"]
+vision-azure = ["azure-ai-contentsafety>=1.0"]
+vision-aws = ["boto3>=1.34"]
+# Observability
+langfuse = ["langfuse>=2.0"]
 dev = [
     "pytest>=7.4",
     "ruff>=0.5",
+    "httpx>=0.27",
+    "fastapi>=0.110",
 ]
 
 [project.urls]

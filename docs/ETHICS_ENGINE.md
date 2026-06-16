@@ -77,6 +77,6 @@ the ends-justify-means tradeoff `deontology_veto` exists to arrest. See
 ## Extending
 
 Add a framework by implementing the `EthicalFramework` protocol (`name`, `is_deontic`,
-`evaluate(action, context) -> Verdict`) and registering it in `pipeline.build_ethics_engine`.
+`evaluate(action, context) -> Verdict`) and registering it in `guard.build_ethics_engine`.
 Virtue Ethics and Care Ethics are natural next additions; a fully declarative policy DSL (each
 framework expressed as data) is the longer-term direction (cf. *Policy-as-Prompt*, arXiv:2509.23994).

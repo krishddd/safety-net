@@ -8,7 +8,13 @@ harness — and its tests — run with no network. Point ``--dataset`` at a real
 """
 
 from .harness import build_evaluator, run_benchmark
-from .loaders import load_agentsafetybench, load_jsonl, load_rjudge, load_sample
+from .loaders import (
+    load_agentsafetybench,
+    load_copyright_sample,
+    load_jsonl,
+    load_rjudge,
+    load_sample,
+)
 from .metrics import ConfusionMatrix, confusion
 from .types import BenchmarkReport, Scenario, ScenarioResult
 
@@ -24,4 +30,5 @@ __all__ = [
     "load_rjudge",
     "load_agentsafetybench",
     "load_sample",
+    "load_copyright_sample",
 ]

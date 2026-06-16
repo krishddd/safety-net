@@ -3,7 +3,9 @@
 Seeded from the **OWASP Top 10 for LLM Applications (2025)** and the full-stack-safety survey
 *A Comprehensive Survey in LLM(-Agent) Full Stack Safety: Data, Training and Deployment*
 (arXiv:2504.15585, 800+ references). This enumerates the failure classes SafetyNet must address
-in a generative media pipeline (script → image → video) and where each defense lives.
+when SafetyNet guards external generative agents (a script/image/video chain reached over HTTP)
+and where each defense lives. SafetyNet sits at each agent call — guarding the request and the
+response — and never trusts the agent to police itself.
 
 ## Assets
 
@@ -21,7 +23,7 @@ in a generative media pipeline (script → image → video) and where each defen
 | 3 | **Sensitive-info / IP disclosure** | Image/Video prompts | `CopyrightScanner` (→ GoG arXiv:2503.16171 / CopyJudge arXiv:2502.15278) |
 | 4 | **Harmful content generation** | All nodes | `ContentSafetyScanner` (→ LlamaGuard/ShieldGemma) + consequentialism harm model |
 | 5 | **Excessive agency / out-of-policy acts** | Any agent | Deontology duties + `deontology_veto` stance (least-privilege intent) |
-| 6 | **Multi-agent cascade failure** | Script → Image → Video | Circuit breaker halts before downstream nodes (NetSafe / G-Safeguard) |
+| 6 | **Multi-agent cascade failure** | chained external agents | Circuit breaker halts before the next guarded call (NetSafe / G-Safeguard) |
 | 7 | **Misalignment / goal drift** | Across the trace | Cumulative-risk circuit breaker over the run's accumulated FLAGs |
 | 8 | **Policy bypass / silent failure** | Scanner/framework error | **Fail-closed**: errors become BLOCK (or configured FLAG), never silent ALLOW |
 | 9 | **Non-repudiation / audit gaps** | Compliance | JSONL audit log with `policy_hash` + content hashes (EU AI Act, NIST AI RMF) |
