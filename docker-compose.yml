@@ -14,22 +14,17 @@ services:
     image: safetynet-gateway:latest
     ports:
       - "8000:8000"
+    # Lets the gateway reach an agent stack running in a *separate* compose project (e.g. Dify)
+    # via http://host.docker.internal. On Docker Desktop this resolves automatically; the mapping
+    # below makes it work on Linux too.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       POLICY_PATH: /app/policies/default.yaml
-      UPSTREAM_TYPE: stub          # stub | nemo | openai | langgraph | dify | crewai
-      # UPSTREAM_URL: http://nemo:8000
-      # UPSTREAM_MODEL: gpt-3.5-turbo
-      # UPSTREAM_API_KEY: ${UPSTREAM_API_KEY}
-    # depends_on:
-    #   - nemo
+      UPSTREAM_TYPE: ${UPSTREAM_TYPE:-stub}   # stub | nemo | openai | langgraph | dify | crewai
+      UPSTREAM_URL: ${UPSTREAM_URL:-}         # e.g. http://host.docker.internal  (Dify on :80)
+      UPSTREAM_MODEL: ${UPSTREAM_MODEL:-gpt-3.5-turbo}
+      UPSTREAM_API_KEY: ${UPSTREAM_API_KEY:-} # Dify app key (app-...) or upstream bearer token
 
-  # --- Example upstream agent (uncomment + adapt to the image you pull) ----------------------
-  # nemo:
-  #   image: nemoguardrails:latest
-  #   command: chat --config=/config
-  #   volumes:
-  #     - ./your-nemo-config:/config
-  #   environment:
-  #     OPENAI_API_KEY: ${OPENAI_API_KEY}
-  #   ports:
-  #     - "8001:8000"
+  # To guard Dify: run Dify's own compose (see docs/INTEGRATIONS.md), then start this gateway with
+  #   UPSTREAM_TYPE=dify UPSTREAM_URL=http://host.docker.internal UPSTREAM_API_KEY=app-xxxx docker compose up --build
