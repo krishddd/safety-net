@@ -1,15 +1,15 @@
-# SynemaGuard — a safety net for generative AI agents
+# SafetyNet — a safety net for generative AI agents
 
 [![CI](https://github.com/krishddd/safety-net/actions/workflows/ci.yml/badge.svg)](https://github.com/krishddd/safety-net/actions/workflows/ci.yml)
 
-SynemaGuard is a **deterministic, rule-based ethical orchestration layer** that sits *outside*
+SafetyNet is a **deterministic, rule-based ethical orchestration layer** that sits *outside*
 generative agents and intercepts every node of a "Cartoon Movie" pipeline:
 
 ```
 Script Agent (LLM)  ──►  Image Agent (diffusion)  ──►  Video Agent (diffusion)
         │                        │                            │
    pre/post gate            pre/post gate                pre/post gate
-        └──────────── SynemaGuard layer: ethics engine · circuit breaker · audit ───────────┘
+        └──────────── SafetyNet layer: ethics engine · circuit breaker · audit ───────────┘
 ```
 
 It operates in the **AI Control** paradigm — safety is forced by external constraints, not
@@ -45,12 +45,12 @@ python examples/run_cartoon_movie.py   # benign run passes; adversarial run is h
 ```
 
 The example prints a per-node decision trace and writes a JSONL audit log to
-`output/audit-<run_id>.jsonl`. Operational logs go to `logs/synemaguard.log`.
+`output/audit-<run_id>.jsonl`. Operational logs go to `logs/safetynet.log`.
 
 ## Layout
 
 ```
-src/synemaguard/
+src/safetynet/
   core/        types (band/Verdict/Action/Context), policy loader, gate, circuit_breaker, audit, logging
   ethics/      base interface, deontology, consequentialism, aggregator (stances), engine
   scanners/    content_safety, copyright, prompt_injection, character_bible (stdlib stubs)
@@ -77,7 +77,7 @@ docs/          ARCHITECTURE, ETHICS_ENGINE, THREAT_MODEL, CONCEPTS
 Phase 1: dependency-light skeleton with **stubbed but pluggable** scanners/generators (runs with
 no GPU or API keys). Real models (LlamaGuard, GoG/CopyJudge, Azure Content Safety), NeMo/CrewAI
 adapters, Langfuse tracing, and a full policy DSL are documented swap-in points — see
-[`docs/CONCEPTS.md`](docs/CONCEPTS.md) and [`SynemaGuard_Research_Reference.md`](SynemaGuard_Research_Reference.md).
+[`docs/CONCEPTS.md`](docs/CONCEPTS.md) and [`SafetyNet_Research_Reference.md`](SafetyNet_Research_Reference.md).
 
 ## License
 

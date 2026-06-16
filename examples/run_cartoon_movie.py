@@ -17,9 +17,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import yaml  # noqa: E402
 
-from synemaguard.core.logging_config import configure_logging  # noqa: E402
-from synemaguard.core.policy import load_policy  # noqa: E402
-from synemaguard.pipeline import build_default_pipeline  # noqa: E402
+from safetynet.core.logging_config import configure_logging  # noqa: E402
+from safetynet.core.policy import load_policy  # noqa: E402
+from safetynet.pipeline import build_default_pipeline  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 

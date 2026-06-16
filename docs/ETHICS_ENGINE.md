@@ -1,6 +1,6 @@
 # The Ethics Engine
 
-This is the mechanism SynemaGuard is named for. It is specified here precisely so the
+This is the mechanism SafetyNet is named for. It is specified here precisely so the
 implementation cannot improvise it.
 
 ## Score convention

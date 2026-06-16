@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from synemaguard.core.circuit_breaker import CircuitBreaker
-from synemaguard.core.types import NodeResult, Stage, Verdict
+from safetynet.core.circuit_breaker import CircuitBreaker
+from safetynet.core.types import NodeResult, Stage, Verdict
 
 
 def _result(decision_score: float, *, deontic: bool = False) -> NodeResult:

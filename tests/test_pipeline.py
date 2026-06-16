@@ -7,9 +7,9 @@ from pathlib import Path
 import pytest
 import yaml
 
-from synemaguard.core.policy import load_policy
-from synemaguard.core.types import Decision
-from synemaguard.pipeline import build_default_pipeline
+from safetynet.core.policy import load_policy
+from safetynet.core.types import Decision
+from safetynet.pipeline import build_default_pipeline
 
 ROOT = Path(__file__).resolve().parents[1]
 

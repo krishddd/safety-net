@@ -1,4 +1,4 @@
-# SynemaGuard default policy.
+# SafetyNet default policy.
 # This is the "swap ethics by config, not code" surface. Framework weights are normalized to
 # sum 1.0 at load time; harm_threshold is an internal harm-model knob (NOT a decision cutoff).
 version: "0.1.0"

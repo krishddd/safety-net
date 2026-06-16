@@ -16,7 +16,7 @@ import logging
 
 from .types import Decision, NodeResult
 
-logger = logging.getLogger("synemaguard.breaker")
+logger = logging.getLogger("safetynet.breaker")
 
 
 class CircuitBreaker:

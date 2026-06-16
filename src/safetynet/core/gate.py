@@ -15,7 +15,7 @@ from ..ethics.engine import EthicsEngine
 from ..scanners.base import Scanner
 from .types import Action, Context, NodeResult, Stage, Verdict
 
-logger = logging.getLogger("synemaguard.gate")
+logger = logging.getLogger("safetynet.gate")
 
 
 class Gate:

@@ -1,4 +1,4 @@
-"""The configurable ethical-framework engine — SynemaGuard's differentiator.
+"""The configurable ethical-framework engine — SafetyNet's differentiator.
 
 Frameworks are pluggable evaluators sharing one interface. The aggregator combines their
 verdicts per a configured *stance* (e.g. ``deontology_veto`` lets inviolable duties *arrest*

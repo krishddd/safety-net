@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from synemaguard.core.types import Action, Context, Decision
-from synemaguard.scanners.character_bible import CharacterBibleScanner
-from synemaguard.scanners.content_safety import ContentSafetyScanner
-from synemaguard.scanners.copyright import CopyrightScanner
-from synemaguard.scanners.prompt_injection import PromptInjectionScanner
+from safetynet.core.types import Action, Context, Decision
+from safetynet.scanners.character_bible import CharacterBibleScanner
+from safetynet.scanners.content_safety import ContentSafetyScanner
+from safetynet.scanners.copyright import CopyrightScanner
+from safetynet.scanners.prompt_injection import PromptInjectionScanner
 
 
 def _a(payload: str, kind: str = "generate_script") -> Action:

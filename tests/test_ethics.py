@@ -4,18 +4,18 @@ from __future__ import annotations
 
 import pytest
 
-from synemaguard.core.types import Action, Context, Decision, Verdict, band
-from synemaguard.ethics.aggregator import Aggregator, strictest
-from synemaguard.ethics.consequentialism import ConsequentialismFramework
-from synemaguard.ethics.deontology import DeontologyFramework, Duty
-from synemaguard.ethics.engine import EthicsEngine
+from safetynet.core.types import Action, Context, Decision, Verdict, band
+from safetynet.ethics.aggregator import Aggregator, strictest
+from safetynet.ethics.consequentialism import ConsequentialismFramework
+from safetynet.ethics.deontology import DeontologyFramework, Duty
+from safetynet.ethics.engine import EthicsEngine
 
 
 def _ctx():
     return Context()
 
 
-# --- The worked example: the mechanism SynemaGuard is named for ---------------------------
+# --- The worked example: the mechanism SafetyNet is named for ---------------------------
 
 def test_deontology_veto_arrests_favorable_consequentialist_score():
     deon = Verdict.from_score("deontology", 0.10, "violates duty: no_deception_of_minors", deontic=True)

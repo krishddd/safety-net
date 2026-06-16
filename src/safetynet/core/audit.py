@@ -17,7 +17,7 @@ from typing import Any
 
 from .types import NodeResult
 
-logger = logging.getLogger("synemaguard.audit")
+logger = logging.getLogger("safetynet.audit")
 
 DEFAULT_OUTPUT_DIR = Path("output")
 

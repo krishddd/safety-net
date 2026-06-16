@@ -1,4 +1,4 @@
-"""Stance-based combination of framework verdicts — the mechanism SynemaGuard is named for.
+"""Stance-based combination of framework verdicts — the mechanism SafetyNet is named for.
 
 Stances:
   * ``deontology_veto`` (default): any deontic ``BLOCK`` wins outright; consequentialist scores

@@ -2,7 +2,7 @@
 
 Seeded from the **OWASP Top 10 for LLM Applications (2025)** and the full-stack-safety survey
 *A Comprehensive Survey in LLM(-Agent) Full Stack Safety: Data, Training and Deployment*
-(arXiv:2504.15585, 800+ references). This enumerates the failure classes SynemaGuard must address
+(arXiv:2504.15585, 800+ references). This enumerates the failure classes SafetyNet must address
 in the Cartoon-Movie pipeline and where each defense lives.
 
 ## Assets
@@ -14,7 +14,7 @@ in the Cartoon-Movie pipeline and where each defense lives.
 
 ## Threats → defenses
 
-| # | Threat (OWASP LLM / agent) | Where it hits | SynemaGuard defense |
+| # | Threat (OWASP LLM / agent) | Where it hits | SafetyNet defense |
 |---|---|---|---|
 | 1 | **Prompt injection** (direct & indirect) | Script/Image/Video input | `PromptInjectionScanner` (→ LlamaFirewall PromptGuard) at PRE gate |
 | 2 | **Insecure output handling** | Script→Image hand-off | POST-stage gate re-scans every node output before it becomes the next input |
@@ -29,7 +29,7 @@ in the Cartoon-Movie pipeline and where each defense lives.
 
 ## Trust boundaries
 
-- The agents are **untrusted**: SynemaGuard never relies on an agent to police itself.
+- The agents are **untrusted**: SafetyNet never relies on an agent to police itself.
 - The policy file is **trusted input**, but validated (schema + stance + fail_mode checks) and
   hashed so any change is detectable in the audit trail.
 - Scanners/frameworks are **fail-closed**: a crash is treated as the unsafe outcome.

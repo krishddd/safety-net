@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from synemaguard.core.policy import PolicyError, load_policy, load_policy_from_dict
+from safetynet.core.policy import PolicyError, load_policy, load_policy_from_dict
 
 ROOT = Path(__file__).resolve().parents[1]
 

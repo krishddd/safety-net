@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from synemaguard.core.gate import Gate
-from synemaguard.core.types import Action, Context, Decision, Stage, Verdict
-from synemaguard.ethics.aggregator import Aggregator
-from synemaguard.ethics.engine import EthicsEngine
+from safetynet.core.gate import Gate
+from safetynet.core.types import Action, Context, Decision, Stage, Verdict
+from safetynet.ethics.aggregator import Aggregator
+from safetynet.ethics.engine import EthicsEngine
 
 
 class AllowFramework:

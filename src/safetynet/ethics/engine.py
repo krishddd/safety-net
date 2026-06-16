@@ -8,7 +8,7 @@ from ..core.types import Action, Context, Verdict
 from .aggregator import Aggregator
 from .base import EthicalFramework
 
-logger = logging.getLogger("synemaguard.ethics")
+logger = logging.getLogger("safetynet.ethics")
 
 
 class EthicsEngine:

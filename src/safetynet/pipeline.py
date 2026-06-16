@@ -27,7 +27,7 @@ from .scanners.content_safety import ContentSafetyScanner
 from .scanners.copyright import CopyrightScanner
 from .scanners.prompt_injection import PromptInjectionScanner
 
-logger = logging.getLogger("synemaguard.pipeline")
+logger = logging.getLogger("safetynet.pipeline")
 
 # Registry mapping policy scanner names to their classes.
 SCANNER_REGISTRY = {
@@ -81,7 +81,7 @@ def build_scanners(policy: PolicyConfig) -> list[tuple[Any, Any]]:
 
 
 class Pipeline:
-    """A three-node Cartoon-Movie pipeline guarded by SynemaGuard."""
+    """A three-node Cartoon-Movie pipeline guarded by SafetyNet."""
 
     def __init__(
         self,

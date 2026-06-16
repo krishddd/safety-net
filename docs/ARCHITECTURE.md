@@ -1,13 +1,13 @@
 # Architecture
 
-SynemaGuard is an **AI Control** layer: it forces safety via external constraints rather than
+SafetyNet is an **AI Control** layer: it forces safety via external constraints rather than
 trusting an aligned model. Governance lives in the orchestration layer, outside the agents — the
 position argued in *From Craft to Constitution* (arXiv:2510.13857) and *Toward a Safe Internet of
 Agents* (arXiv:2512.00520).
 
 ```
                 ┌──────────────────────────────────────────────┐
-                │            SYNEMAGUARD LAYER                   │
+                │            SAFETYNET LAYER                     │
                 │  Policy · Ethics Engine · Circuit Breaker · Audit │
                 └──────────────────────────────────────────────┘
    pre │ post gate wraps every node (TrustAgent pre/post stages, arXiv:2402.01586)
@@ -33,7 +33,7 @@ Agents* (arXiv:2512.00520).
 
 ## Gate stages — why two, not three
 
-TrustAgent describes pre-planning, in-planning, and post-planning interception. SynemaGuard's
+TrustAgent describes pre-planning, in-planning, and post-planning interception. SafetyNet's
 gate implements **`pre`** (evaluate the input before the node runs) and **`post`** (evaluate the
 output after). Phase-1 stub agents return their output in one shot, so there is nothing to
 intercept mid-generation; the audit schema's `stage` field is therefore `pre|post` only. **True

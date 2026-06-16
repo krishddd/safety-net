@@ -119,7 +119,7 @@ class Context:
     """Ambient context available to every evaluator: the bible, the policy, and the trace."""
 
     character_bible: dict[str, Any] = field(default_factory=dict)
-    policy: Any = None     # synemaguard.core.policy.PolicyConfig (avoid import cycle)
+    policy: Any = None     # safetynet.core.policy.PolicyConfig (avoid import cycle)
     trace: list[NodeResult] = field(default_factory=list)
 
 

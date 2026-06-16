@@ -1,12 +1,12 @@
 # Concepts — research grounding mapped to components
 
-This maps each SynemaGuard component to the tool/paper that backs it. The full survey is in
-[`../SynemaGuard_Research_Reference.md`](../SynemaGuard_Research_Reference.md). Every citation
+This maps each SafetyNet component to the tool/paper that backs it. The full survey is in
+[`../SafetyNet_Research_Reference.md`](../SafetyNet_Research_Reference.md). Every citation
 below was verified to resolve and to match its described use (see "Citation notes" at the end).
 
 ## Paradigm
 
-| Concept | Source | In SynemaGuard |
+| Concept | Source | In SafetyNet |
 |---|---|---|
 | AI Control vs AI Alignment | *From Craft to Constitution* (arXiv:2510.13857) | Governance sits **outside** agents, in the orchestration layer |
 | Deterministic policy vs probabilistic execution | *Toward a Safe Internet of Agents* (arXiv:2512.00520) | The gate/breaker are deterministic; agents stay probabilistic |
@@ -24,7 +24,7 @@ below was verified to resolve and to match its described use (see "Citation note
 
 ## Ethics engine
 
-| Concept | Source | In SynemaGuard |
+| Concept | Source | In SafetyNet |
 |---|---|---|
 | Deontological / least-privilege constraints | *ProgEnt* (arXiv:2504.11703), *AgentGuardian* | `DeontologyFramework` duties + `deontology_veto` |
 | Consequentialist outcome weighing | classical normative ethics | `ConsequentialismFramework` net-harm model |
@@ -32,7 +32,7 @@ below was verified to resolve and to match its described use (see "Citation note
 
 ## Circuit breaker & multi-agent governance
 
-| Concept | Source | In SynemaGuard |
+| Concept | Source | In SafetyNet |
 |---|---|---|
 | Per-node monitoring / corrupted-node isolation | *Securing MAS via Node Contribution Backpropagation* (arXiv:2510.19420, ICML 2026) | Per-node `observe()` before downstream propagation |
 | Topological cascade risk | *NetSafe* (arXiv:2410.15686), *G-Safeguard* (arXiv:2502.11127, ACL 2025) | Halt-before-downstream stops cascades |
@@ -41,7 +41,7 @@ below was verified to resolve and to match its described use (see "Citation note
 
 ## Governance & compliance
 
-| Standard | In SynemaGuard |
+| Standard | In SafetyNet |
 |---|---|
 | EU AI Act Art. 13/14 (traceability, human oversight) | `policy_hash` + per-node audit; `human_review_on_flag` |
 | NIST AI RMF / NIST.AI.600-1 | Continuous logging, adversarial-test hooks |

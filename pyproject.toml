@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "synemaguard"
+name = "safetynet"
 version = "0.1.0"
 description = "A deterministic, rule-based ethical orchestration layer (safety net) for generative AI agents."
 readme = "README.md"

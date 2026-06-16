@@ -1,2 +1,2 @@
-# Runtime dependencies for SynemaGuard (lean by design).
+# Runtime dependencies for SafetyNet (lean by design).
 PyYAML>=6.0

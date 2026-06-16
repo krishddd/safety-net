@@ -1,7 +1,7 @@
 """Centralized logging configuration.
 
-Logs go to the console and to ``logs/synemaguard.log`` (rotating). The audit *trail* is a
-separate, structured JSONL stream (see :mod:`synemaguard.core.audit`); this module is for
+Logs go to the console and to ``logs/safetynet.log`` (rotating). The audit *trail* is a
+separate, structured JSONL stream (see :mod:`safetynet.core.audit`); this module is for
 human-readable operational logging only.
 """
 
@@ -22,9 +22,9 @@ def configure_logging(
     *,
     to_file: bool = True,
 ) -> logging.Logger:
-    """Configure the ``synemaguard`` logger tree. Idempotent."""
+    """Configure the ``safetynet`` logger tree. Idempotent."""
     global _configured
-    root = logging.getLogger("synemaguard")
+    root = logging.getLogger("safetynet")
     if _configured:
         root.setLevel(level)
         return root
@@ -40,7 +40,7 @@ def configure_logging(
         log_path = Path(log_dir)
         log_path.mkdir(parents=True, exist_ok=True)
         file_handler = logging.handlers.RotatingFileHandler(
-            log_path / "synemaguard.log", maxBytes=2_000_000, backupCount=3, encoding="utf-8"
+            log_path / "safetynet.log", maxBytes=2_000_000, backupCount=3, encoding="utf-8"
         )
         file_handler.setFormatter(formatter)
         root.addHandler(file_handler)

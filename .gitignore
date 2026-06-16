@@ -16,7 +16,7 @@ env/
 .coverage
 htmlcov/
 
-# SynemaGuard runtime artifacts (keep the folders, ignore their contents)
+# SafetyNet runtime artifacts (keep the folders, ignore their contents)
 output/*.jsonl
 logs/*.log
 logs/*.log.*

@@ -2,7 +2,7 @@
 
 A breach of any *inviolable* duty yields a hard ``BLOCK`` (``deontic=True``) that the
 aggregator's ``deontology_veto`` stance cannot override with a favorable consequentialist
-score. This is how SynemaGuard "arrests consequentialism".
+score. This is how SafetyNet "arrests consequentialism".
 """
 
 from __future__ import annotations

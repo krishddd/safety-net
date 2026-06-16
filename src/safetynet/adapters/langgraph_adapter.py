@@ -1,6 +1,6 @@
 """LangGraph adapter (optional).
 
-Wraps a :class:`~synemaguard.pipeline.Pipeline` as a LangGraph ``StateGraph`` so SynemaGuard's
+Wraps a :class:`~safetynet.pipeline.Pipeline` as a LangGraph ``StateGraph`` so SafetyNet's
 gates become graph nodes with conditional edges that route to ``END`` the moment the circuit
 breaker halts. The import of ``langgraph`` is guarded: if it is not installed, ``AVAILABLE`` is
 ``False`` and :func:`build_state_graph` raises an informative error rather than crashing import.
@@ -15,7 +15,7 @@ from ..core.circuit_breaker import CircuitBreaker
 from ..core.types import Action, Context, Stage
 from ..pipeline import Pipeline, _to_text
 
-logger = logging.getLogger("synemaguard.adapters.langgraph")
+logger = logging.getLogger("safetynet.adapters.langgraph")
 
 try:  # pragma: no cover - exercised only when langgraph is installed
     from langgraph.graph import END, StateGraph
