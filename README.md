@@ -72,12 +72,43 @@ docs/          ARCHITECTURE, ETHICS_ENGINE, THREAT_MODEL, CONCEPTS
 - **Reconstructable audit** — every node decision is logged with the `policy_hash` in effect and
   content referenced by sha256 (EU AI Act Art. 13/14; NIST AI RMF).
 
+## Optional integrations (install extras)
+
+Everything above runs with **no GPU or API keys**. These extras wire in real models /
+frameworks behind the same interfaces — all imports are lazy and fail-closed, so the core
+stays dependency-light.
+
+| Extra | Install | Adds |
+|---|---|---|
+| `guard` | `pip install '.[guard]'` | `TransformersGuardBackend` — local LlamaGuard/ShieldGemma behind `ContentSafetyScanner` |
+| `anthropic` | `pip install '.[anthropic]'` | `AnthropicModerationBackend` — Claude LLM-as-judge moderation (needs `ANTHROPIC_API_KEY`) |
+| `langgraph` | `pip install '.[langgraph]'` | LangGraph `StateGraph` adapter |
+| `nemo` | `pip install '.[nemo]'` | NeMo Guardrails custom-action adapter |
+| `crewai` | `pip install '.[crewai]'` | CrewAI task-guardrail adapter |
+
+Select a moderation backend in policy: `content_safety: { backend: transformers, model_id: ... }`
+or inject one directly: `ContentSafetyScanner(backend=AnthropicModerationBackend())`.
+
+## Benchmark harness
+
+Evaluate SafetyNet's detection against labeled agent-safety datasets (R-Judge,
+Agent-SafetyBench, or any JSONL). A small offline sample ships in the repo:
+
+```bash
+python examples/run_benchmark.py                 # runs on the bundled sample
+python -m safetynet.benchmark --dataset r-judge.jsonl --format rjudge   # real dataset
+```
+
+It reports accuracy / precision / recall / F1 and a confusion matrix, with a `--block-only`
+mode to measure refusals vs. mere flags. See [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
+
 ## Status
 
-Phase 1: dependency-light skeleton with **stubbed but pluggable** scanners/generators (runs with
-no GPU or API keys). Real models (LlamaGuard, GoG/CopyJudge, Azure Content Safety), NeMo/CrewAI
-adapters, Langfuse tracing, and a full policy DSL are documented swap-in points — see
-[`docs/CONCEPTS.md`](docs/CONCEPTS.md) and [`SafetyNet_Research_Reference.md`](SafetyNet_Research_Reference.md).
+Phase 1 + first integrations. Real moderation backends (transformers/Anthropic), LangGraph /
+NeMo / CrewAI adapters, and the benchmark harness are in place; copyright/injection scanners
+still ship as stdlib stubs, and Langfuse tracing + a full policy DSL remain documented swap-in
+points — see [`docs/CONCEPTS.md`](docs/CONCEPTS.md) and
+[`SafetyNet_Research_Reference.md`](SafetyNet_Research_Reference.md).
 
 ## License
 

@@ -47,10 +47,12 @@ below was verified to resolve and to match its described use (see "Citation note
 | NIST AI RMF / NIST.AI.600-1 | Continuous logging, adversarial-test hooks |
 | OWASP Top 10 for LLM Apps (2025) | Enumerated in [THREAT_MODEL.md](THREAT_MODEL.md) |
 
-## Benchmarks (for future validation)
+## Benchmarks
 
-R-Judge (arXiv:2401.10019), Agent-SafetyBench (arXiv:2412.14470), Copyright Infringement
-Benchmark (arXiv:2403.12052). Not wired in Phase 1; targeted for the evaluation harness.
+R-Judge (arXiv:2401.10019) and Agent-SafetyBench (arXiv:2412.14470) are wired into the
+benchmark harness (`safetynet.benchmark`, see [BENCHMARKS.md](BENCHMARKS.md)) with tolerant
+loaders; the Copyright Infringement Benchmark (arXiv:2403.12052) for the visual nodes remains
+a follow-up.
 
 ## Citation notes (from the verification pass)
 

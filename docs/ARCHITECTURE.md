@@ -62,9 +62,18 @@ input ─► Gate.PRE (scanners + ethics, strictest) ─► breaker.observe ─�
         output becomes next node's input
 ```
 
+## Done since Phase 1
+
+- **Real moderation backends** behind `ContentSafetyScanner` — `TransformersGuardBackend`
+  (LlamaGuard/ShieldGemma) and `AnthropicModerationBackend` (LLM-as-judge), policy-selectable,
+  lazy/optional, fail-closed. See `scanners/moderation.py`.
+- **NeMo Guardrails and CrewAI adapters** alongside the LangGraph one (`adapters/`).
+- **Benchmark harness** (R-Judge / Agent-SafetyBench / generic JSONL) with metrics + CLI
+  (`benchmark/`, [BENCHMARKS.md](BENCHMARKS.md)).
+
 ## Deferred (follow-up phases)
 
-- Real guard models / diffusion / cloud moderation behind the existing interfaces.
-- NeMo Guardrails (Colang) and CrewAI adapters alongside the LangGraph one.
-- Langfuse-backed tracing; benchmark harness (R-Judge, Agent-SafetyBench, copyright benchmark).
+- Real diffusion / cloud-vision moderation for the image/video nodes; embedding-based copyright
+  (GoG) and PromptGuard injection models behind their existing scanner interfaces.
+- Langfuse-backed tracing; the copyright-reproduction benchmark (arXiv:2403.12052).
 - In-execution (`in`) stage for streaming agents; full declarative policy DSL; Virtue/Care frameworks.

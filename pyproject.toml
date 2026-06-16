@@ -16,7 +16,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Orchestration adapters
 langgraph = ["langgraph>=0.2"]
+nemo = ["nemoguardrails>=0.9"]
+crewai = ["crewai>=0.40"]
+# Real moderation backends for ContentSafetyScanner
+guard = ["transformers>=4.40", "torch>=2.0"]
+anthropic = ["anthropic>=0.40"]
 dev = [
     "pytest>=7.4",
     "ruff>=0.5",
@@ -28,6 +34,9 @@ Repository = "https://github.com/krishddd/safety-net"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"safetynet.benchmark" = ["data/*.jsonl"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

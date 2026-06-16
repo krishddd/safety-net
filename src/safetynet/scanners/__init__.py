@@ -12,6 +12,14 @@ from .base import Scanner
 from .character_bible import CharacterBibleScanner
 from .content_safety import ContentSafetyScanner
 from .copyright import CopyrightScanner
+from .moderation import (
+    AnthropicModerationBackend,
+    KeywordBackend,
+    ModerationBackend,
+    ModerationResult,
+    TransformersGuardBackend,
+    build_backend,
+)
 from .prompt_injection import PromptInjectionScanner
 
 __all__ = [
@@ -20,4 +28,11 @@ __all__ = [
     "CopyrightScanner",
     "PromptInjectionScanner",
     "CharacterBibleScanner",
+    # moderation backends
+    "ModerationBackend",
+    "ModerationResult",
+    "KeywordBackend",
+    "TransformersGuardBackend",
+    "AnthropicModerationBackend",
+    "build_backend",
 ]

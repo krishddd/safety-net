@@ -1,48 +1,59 @@
-"""Content-safety scanner (stub).
+"""Content-safety scanner.
 
-Swap-in point for LlamaGuard 4 / NeMoGuard-8B / ShieldGemma (see docs/CONCEPTS.md). The stub
-flags a small set of unsafe categories by keyword and lowers the safety score per hit.
+Delegates the actual classification to a pluggable :class:`ModerationBackend` (see
+``moderation.py``). The default ``keyword`` backend is dependency-free and reproduces the
+Phase-1 stub behavior; selecting ``transformers`` (LlamaGuard/ShieldGemma) or ``anthropic``
+(LLM-as-judge) wires in a real guard model with no other code changes.
+
+This scanner is the single place where a backend's ``unsafe_score`` is converted to the
+project-wide *safety* score (``safety = 1 - unsafe_score``).
 """
 
 from __future__ import annotations
 
-from ..core.types import Action, Context, Verdict
-from .base import tokenize
+import logging
 
-# Minimal illustrative lexicon. A real classifier replaces this entirely.
-DEFAULT_UNSAFE_TERMS: dict[str, float] = {
-    "gore": 0.5,
-    "graphic violence": 0.6,
-    "decapitation": 0.7,
-    "torture": 0.6,
-    "explicit": 0.5,
-    "self-harm": 0.8,
-    "weapon how-to": 0.7,
-}
+from ..core.types import Action, Context, Verdict
+from .moderation import DEFAULT_UNSAFE_TERMS, ModerationBackend, build_backend
+
+logger = logging.getLogger("safetynet.scanners.content_safety")
+
+__all__ = ["ContentSafetyScanner", "DEFAULT_UNSAFE_TERMS"]
 
 
 class ContentSafetyScanner:
     name = "content_safety"
 
-    def __init__(self, unsafe_terms: dict[str, float] | None = None) -> None:
-        self.unsafe_terms = {k.lower(): float(v) for k, v in (unsafe_terms or DEFAULT_UNSAFE_TERMS).items()}
+    def __init__(
+        self,
+        backend: str | ModerationBackend = "keyword",
+        unsafe_terms: dict[str, float] | None = None,
+        model_id: str | None = None,
+        **backend_params,
+    ) -> None:
+        """Create a content-safety scanner.
+
+        Args:
+            backend: a backend name (``keyword`` | ``transformers`` | ``anthropic``) or a ready
+                :class:`ModerationBackend` instance (useful for tests / dependency injection).
+            unsafe_terms: keyword lexicon for the ``keyword`` backend.
+            model_id: model identifier for the ``transformers``/``anthropic`` backends.
+            **backend_params: forwarded to the backend constructor.
+        """
+        if isinstance(backend, str):
+            params = dict(backend_params)
+            if backend == "keyword" and unsafe_terms is not None:
+                params["unsafe_terms"] = unsafe_terms
+            if model_id is not None and backend in ("transformers", "anthropic"):
+                params["model" if backend == "anthropic" else "model_id"] = model_id
+            self.backend: ModerationBackend = build_backend(backend, **params)
+        else:
+            self.backend = backend
 
     def scan(self, action: Action, context: Context) -> Verdict:
-        text = action.payload.lower()
-        hits = {term: w for term, w in self.unsafe_terms.items() if term in text}
-        # Tokens help catch single-word terms cheaply too.
-        token_set = set(tokenize(action.payload))
-        for term, w in self.unsafe_terms.items():
-            if " " not in term and term in token_set:
-                hits[term] = w
-
-        if not hits:
-            return Verdict.from_score(self.name, 0.95, "no unsafe content terms detected")
-
-        # Safety drops with the strongest hit; multiple hits compound mildly.
-        worst = max(hits.values())
-        penalty = min(1.0, worst + 0.05 * (len(hits) - 1))
-        safety = max(0.0, 1.0 - penalty)
-        return Verdict.from_score(
-            self.name, safety, f"unsafe content terms: {sorted(hits)}"
+        result = self.backend.classify(action.payload)
+        safety = max(0.0, 1.0 - float(result.unsafe_score))
+        detail = result.detail or (
+            f"unsafe categories: {result.categories}" if result.categories else "no unsafe content detected"
         )
+        return Verdict.from_score(self.name, safety, f"[{self.backend.name}] {detail}")
