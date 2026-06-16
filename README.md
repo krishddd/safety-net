@@ -3,7 +3,7 @@
 [![CI](https://github.com/krishddd/safety-net/actions/workflows/ci.yml/badge.svg)](https://github.com/krishddd/safety-net/actions/workflows/ci.yml)
 
 SafetyNet is a **deterministic, rule-based ethical orchestration layer** that sits *outside*
-generative agents and intercepts every node of a "Cartoon Movie" pipeline:
+generative agents and intercepts every node of a generative media pipeline (script → image → video):
 
 ```
 Script Agent (LLM)  ──►  Image Agent (diffusion)  ──►  Video Agent (diffusion)
@@ -41,7 +41,7 @@ python -m venv .venv && . .venv/Scripts/activate   # Windows; use bin/activate o
 pip install -e ".[dev]"
 
 pytest                              # run the test suite
-python examples/run_cartoon_movie.py   # benign run passes; adversarial run is halted
+python examples/run_pipeline.py        # benign run passes; adversarial run is halted
 ```
 
 The example prints a per-node decision trace and writes a JSONL audit log to
@@ -58,7 +58,7 @@ src/safetynet/
   adapters/    langgraph_adapter (optional dependency)
   pipeline.py  framework-agnostic wiring + build_default_pipeline()
 policies/      default.yaml, character_bible.yaml
-examples/      run_cartoon_movie.py
+examples/      run_pipeline.py, run_benchmark.py
 tests/         ethics, gate, circuit_breaker, scanners, policy, pipeline
 docs/          ARCHITECTURE, ETHICS_ENGINE, THREAT_MODEL, CONCEPTS
 ```

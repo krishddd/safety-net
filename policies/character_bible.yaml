@@ -1,4 +1,4 @@
-# The project's "character bible" — canonical cast and hard constraints for the Cartoon Movie.
+# Example "character bible" — canonical cast and hard constraints for a demo generative pipeline.
 # Loaded into Context and consumed by the CharacterBibleScanner (and available to all evaluators).
 title: "The Clockwork Meadow"
 characters:

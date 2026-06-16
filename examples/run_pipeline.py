@@ -2,7 +2,7 @@
 
 Run from the repo root:
 
-    python examples/run_cartoon_movie.py
+    python examples/run_pipeline.py
 
 Outputs are written to ``output/audit-<run_id>.jsonl`` and operational logs to ``logs/``.
 """

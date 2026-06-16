@@ -36,7 +36,7 @@ jobs:
         run: pytest
 
       - name: Smoke-test the example pipeline
-        run: python examples/run_cartoon_movie.py
+        run: python examples/run_pipeline.py
 
       - name: Smoke-test the benchmark harness
         run: python -m safetynet.benchmark

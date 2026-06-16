@@ -3,7 +3,7 @@
 Seeded from the **OWASP Top 10 for LLM Applications (2025)** and the full-stack-safety survey
 *A Comprehensive Survey in LLM(-Agent) Full Stack Safety: Data, Training and Deployment*
 (arXiv:2504.15585, 800+ references). This enumerates the failure classes SafetyNet must address
-in the Cartoon-Movie pipeline and where each defense lives.
+in a generative media pipeline (script → image → video) and where each defense lives.
 
 ## Assets
 

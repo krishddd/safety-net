@@ -81,7 +81,7 @@ def build_scanners(policy: PolicyConfig) -> list[tuple[Any, Any]]:
 
 
 class Pipeline:
-    """A three-node Cartoon-Movie pipeline guarded by SafetyNet."""
+    """A three-node generative media pipeline (script → image → video) guarded by SafetyNet."""
 
     def __init__(
         self,

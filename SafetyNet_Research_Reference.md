@@ -1,7 +1,7 @@
 # SafetyNet Research Reference
 ## Comprehensive Survey: AI Governance Layers, Safety Guardrails & Deontological Agent Constraints
 
-> **Purpose:** This document maps every relevant tool, open-source framework, arXiv paper, benchmark, and enterprise product that is directly applicable to building SafetyNet — a deterministic, rule-based ethical orchestration layer sitting atop generative AI pipelines (LLMs + Diffusion models) for the "Cartoon Movie" project.
+> **Purpose:** This document maps every relevant tool, open-source framework, arXiv paper, benchmark, and enterprise product that is directly applicable to building SafetyNet — a deterministic, rule-based ethical orchestration layer sitting atop generative AI pipelines (LLMs + Diffusion models) for script, image, and video generation.
 
 ---
 
