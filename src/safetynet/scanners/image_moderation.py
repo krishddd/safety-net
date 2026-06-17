@@ -16,14 +16,23 @@ All cloud/model backends import lazily and are fail-closed at the gate. Image da
 
 from __future__ import annotations
 
+import base64
+import binascii
 import logging
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
+from urllib.parse import urlparse
 
 from ..core.types import Action, Context, Verdict
 
 logger = logging.getLogger("safetynet.scanners.image_moderation")
+
+# Image references an agent may return in its text/raw payload.
+_MD_IMAGE_RE = re.compile(r"!\[[^\]]*\]\(\s*(\S+?)\s*\)")          # markdown ![alt](url)
+_BARE_IMG_URL_RE = re.compile(r"https?://[^\s)\"']+\.(?:png|jpe?g|webp|gif|bmp)\b", re.IGNORECASE)
+_DATA_URI_RE = re.compile(r"data:image/[A-Za-z.+-]+;base64,([A-Za-z0-9+/=]+)")
 
 
 @dataclass
@@ -64,6 +73,51 @@ def _extract_image(action: Action, allow_path_read: bool = False) -> bytes | Non
             with open(path, "rb") as fh:
                 return fh.read()
     return None
+
+
+def _find_image_refs(action: Action) -> list[str]:
+    """Collect image URLs / data-URIs from the response text and the agent's raw payload.
+
+    Handles markdown image links, bare image URLs, ``data:image/...;base64,...`` URIs, and the
+    ``message_files`` / ``files`` lists Dify returns for generated images.
+    """
+    refs: list[str] = []
+    text = action.payload or ""
+    refs += _MD_IMAGE_RE.findall(text)
+    refs += _BARE_IMG_URL_RE.findall(text)
+    refs += [f"data:image/x;base64,{b}" for b in _DATA_URI_RE.findall(text)]
+
+    out = (action.metadata or {}).get("output")
+    if isinstance(out, dict):
+        for key in ("message_files", "files", "images"):
+            for f in out.get(key) or []:
+                if isinstance(f, dict):
+                    url = f.get("url") or f.get("image_url") or f.get("preview_url")
+                    if url and (f.get("type") in (None, "image") or str(url).lower().endswith((".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"))):
+                        refs.append(url)
+                elif isinstance(f, str):
+                    refs.append(f)
+    # De-duplicate, preserve order.
+    seen: set[str] = set()
+    return [r for r in refs if not (r in seen or seen.add(r))]
+
+
+def _decode_data_uri(uri: str) -> bytes | None:
+    m = _DATA_URI_RE.search(uri)
+    if not m:
+        return None
+    try:
+        return base64.b64decode(m.group(1) + "=" * (-len(m.group(1)) % 4))
+    except (binascii.Error, ValueError):
+        return None
+
+
+def _host_allowed(url: str, allowed_hosts: tuple[str, ...]) -> bool:
+    """SSRF guard: only http/https URLs whose host is on the explicit allowlist may be fetched."""
+    if not allowed_hosts:
+        return False  # empty allowlist => fetch nothing (must be configured explicitly)
+    p = urlparse(url)
+    return p.scheme in ("http", "https") and p.hostname in allowed_hosts
 
 
 class NullVisionBackend:
@@ -176,7 +230,13 @@ def build_vision_backend(name: str, **params) -> VisionBackend:
 
 
 class ImageModerationScanner:
-    """Moderates generated image/video output via a pluggable vision backend."""
+    """Moderates images an agent returns — inline bytes, data-URIs, or fetched URLs.
+
+    For agents like Dify that return images as markdown URLs, set ``fetch_urls: true`` and an
+    explicit ``allowed_url_hosts`` allowlist (SSRF guard). Without an allowlist no URL is fetched.
+    The scanner runs whenever an image is present, regardless of node kind, so it works behind a
+    generic ``generate_text`` chat agent.
+    """
 
     name = "image_moderation"
 
@@ -185,19 +245,75 @@ class ImageModerationScanner:
         backend: str | VisionBackend = "null",
         applies_to_kinds: tuple[str, ...] = ("generate_image", "generate_video"),
         allow_path_read: bool = False,
+        fetch_urls: bool = False,
+        allowed_url_hosts: tuple[str, ...] | list[str] = (),
+        max_image_bytes: int = 10_000_000,
+        timeout: float = 10.0,
         **backend_params,
     ) -> None:
         self.backend: VisionBackend = build_vision_backend(backend, **backend_params) if isinstance(backend, str) else backend
-        self.applies_to_kinds = applies_to_kinds
+        self.applies_to_kinds = tuple(applies_to_kinds)
         self.allow_path_read = allow_path_read
+        self.fetch_urls = fetch_urls
+        self.allowed_url_hosts = tuple(allowed_url_hosts)
+        self.max_image_bytes = int(max_image_bytes)
+        self.timeout = timeout
+
+    def _fetch(self, url: str) -> bytes | None:
+        if not _host_allowed(url, self.allowed_url_hosts):
+            logger.warning("image fetch blocked (host not allowlisted): %s", url)
+            return None
+        try:
+            import httpx
+        except ImportError:
+            logger.warning("fetch_urls enabled but httpx not installed (pip install '.[http]')")
+            return None
+        try:
+            with httpx.Client(timeout=self.timeout, follow_redirects=False) as client:
+                resp = client.get(url)
+                resp.raise_for_status()
+                return resp.content[: self.max_image_bytes]
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("image fetch failed for %s: %s", url, exc)
+            return None
+
+    def _collect(self, action: Action) -> tuple[list[bytes], int]:
+        """Return (image byte blobs, number of image references seen)."""
+        images: list[bytes] = []
+        inline = _extract_image(action, allow_path_read=self.allow_path_read)
+        if inline is not None:
+            images.append(inline)
+
+        refs = _find_image_refs(action)
+        for ref in refs:
+            if ref.startswith("data:image/"):
+                data = _decode_data_uri(ref)
+                if data:
+                    images.append(data)
+            elif self.fetch_urls:
+                data = self._fetch(ref)
+                if data:
+                    images.append(data)
+        return images, len(refs)
 
     def scan(self, action: Action, context: Context) -> Verdict:
-        if action.kind not in self.applies_to_kinds:
-            return Verdict.from_score(self.name, 0.9, "not an image/video node; skipped")
-        image = _extract_image(action, allow_path_read=self.allow_path_read)
-        if image is None:
+        images, n_refs = self._collect(action)
+
+        if images:
+            worst_safety, worst_detail, worst_cats = 1.0, "clean", []
+            for img in images:
+                res = self.backend.moderate(img)
+                safety = max(0.0, 1.0 - float(res.unsafe_score))
+                if safety < worst_safety:
+                    worst_safety, worst_detail, worst_cats = safety, res.detail, res.categories
+            detail = worst_detail or (f"unsafe: {worst_cats}" if worst_cats else "clean")
+            return Verdict.from_score(self.name, worst_safety, f"[{self.backend.name}] {len(images)} image(s): {detail}")
+
+        # No bytes obtained.
+        if n_refs:
+            if self.fetch_urls:
+                return Verdict.from_score(self.name, 0.5, f"{n_refs} image URL(s) present but could not be fetched/moderated")
+            return Verdict.from_score(self.name, 0.7, f"{n_refs} image URL(s) present; URL fetching disabled")
+        if action.kind in self.applies_to_kinds:
             return Verdict.from_score(self.name, 0.85, "no image data available to moderate")
-        result = self.backend.moderate(image)
-        safety = max(0.0, 1.0 - float(result.unsafe_score))
-        detail = result.detail or (f"unsafe: {result.categories}" if result.categories else "clean")
-        return Verdict.from_score(self.name, safety, f"[{self.backend.name}] {detail}")
+        return Verdict.from_score(self.name, 0.9, "no image content; skipped")

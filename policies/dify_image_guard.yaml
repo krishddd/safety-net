@@ -1,0 +1,53 @@
+# SafetyNet policy for guarding a Dify image-generation agent.
+# Same as default.yaml, but with image_moderation ENABLED to re-check images Dify returns.
+#
+# Use it:  POLICY_PATH=/app/policies/dify_image_guard.yaml  (or mount your own)
+#
+# The default `null` vision backend only proves the fetch/decode plumbing — swap to a real
+# backend for actual moderation:
+#   backend: nsfw        (local model, needs the [guard] extra: transformers + Pillow)
+#   backend: azure       (Azure AI Content Safety, needs [vision-azure] + env keys)
+#   backend: rekognition (AWS Rekognition, needs [vision-aws] + AWS creds)
+version: "0.1.0"
+
+ethics:
+  stance: deontology_veto
+  human_review_on_flag: false
+  frameworks:
+    deontology:
+      enabled: true
+      weight: 0.5
+      duties:
+        - id: no_deception_of_minors
+          description: "Characters must not deceive children."
+          forbidden_substrings: ["lies to a child", "lie to a child", "deceive a child", "deception of a minor"]
+        - id: no_real_world_violence_instructions
+          description: "No instructions enabling real-world harm."
+          forbidden_substrings: ["how to build a bomb", "make a weapon", "synthesize poison"]
+        - id: no_protected_ip_reproduction
+          description: "Do not reproduce protected third-party IP verbatim."
+          forbidden_substrings: ["captain sprocket", "glimmertown"]
+    consequentialism:
+      enabled: true
+      weight: 0.5
+      harm_threshold: 0.5
+      harm_terms: { gore: 0.6, graphic violence: 0.6, terrifying: 0.3, cruelty: 0.5 }
+      benefit_terms: { spare their feelings: 0.5, comfort: 0.3, educational: 0.3, heartwarming: 0.3 }
+
+scanners:
+  content_safety:   { enabled: true, fail_mode: BLOCK }
+  copyright:        { enabled: true, fail_mode: BLOCK }
+  prompt_injection: { enabled: true, fail_mode: BLOCK }
+  pii:              { enabled: true, fail_mode: BLOCK }
+  image_moderation:
+    enabled: true
+    fail_mode: BLOCK
+    backend: "null"                     # -> nsfw | azure | rekognition for real moderation
+    fetch_urls: true                    # fetch image URLs Dify returns
+    allowed_url_hosts: ["localhost", "host.docker.internal", "127.0.0.1"]  # SSRF allowlist
+  character_bible:  { enabled: true, fail_mode: FLAG }
+
+character_bible_ref: policies/character_bible.yaml
+
+circuit_breaker:
+  cumulative_risk_threshold: 1.5

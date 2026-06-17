@@ -94,8 +94,35 @@ curl -s localhost:8000/v1/chat/completions -H 'content-type: application/json' \
 ```
 
 `dify_client()` POSTs `{"query": …, "inputs": {}, "response_mode": "blocking", "user": "safetynet"}`
-to `/v1/chat-messages` and reads `answer`. Use it to test prompts aimed at bypassing Dify's native
-image-safety filters — SafetyNet's `image_moderation` scanner can re-check the returned media.
+to `/v1/chat-messages` and reads `answer`.
+
+### Re-check the images Dify returns
+
+Dify hands back generated images as markdown URLs / `message_files`. The `image_moderation` scanner
+extracts those references, **fetches** them (httpx, gated by an SSRF host allowlist), and moderates
+the bytes — so a generated DALL·E image is checked, not just the text. Use the ready policy:
+
+```bash
+# host run
+POLICY_PATH=policies/dify_image_guard.yaml UPSTREAM_TYPE=dify UPSTREAM_URL=http://localhost \
+  UPSTREAM_API_KEY=app-XXXXXXXX uvicorn safetynet.server.app:app --port 8000
+
+# docker run (set POLICY_PATH in .env or compose; mount the policy if customized)
+```
+
+`policies/dify_image_guard.yaml` enables:
+```yaml
+image_moderation:
+  enabled: true
+  fail_mode: BLOCK
+  backend: "null"      # swap to nsfw ([guard]) / azure ([vision-azure]) / rekognition ([vision-aws])
+  fetch_urls: true
+  allowed_url_hosts: ["localhost", "host.docker.internal", "127.0.0.1"]   # SSRF allowlist
+```
+The default `null` backend only proves the fetch/decode plumbing (always "safe"); switch `backend`
+to a real one for actual moderation. URLs are fetched **only** for hosts on `allowed_url_hosts`
+(empty allowlist = no fetch), with a 10 MB / 10 s cap and no redirects — preventing SSRF via a
+malicious image URL in the agent's reply. An image URL that can't be fetched is surfaced as a FLAG.
 
 ## CrewAI
 

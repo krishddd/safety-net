@@ -122,3 +122,55 @@ def test_vision_registry_and_unknown():
     assert {"null", "azure", "rekognition", "nsfw"} <= set(VIS_REG)
     with pytest.raises(ValueError):
         build_vision_backend("nope")
+
+
+# --- image moderation: response image extraction / fetch / SSRF -----------------------------
+
+class _BlockVision:
+    name = "block"
+
+    def moderate(self, image):
+        return VisionResult(unsafe_score=0.95, categories=["explicit"], detail="unsafe")
+
+
+def test_image_moderation_decodes_data_uri_in_response():
+    import base64
+
+    from safetynet.core.types import Action
+
+    png = base64.b64encode(b"\x89PNG\r\n\x1a\n fake bytes").decode()
+    text = f"here is your image ![out](data:image/png;base64,{png})"
+    sc = ImageModerationScanner(backend=_BlockVision())
+    v = sc.scan(Action("agent", "generate_text", text), Context())
+    assert v.decision is Decision.BLOCK   # data-URI decoded and moderated even on a text node
+
+
+def test_image_moderation_does_not_fetch_urls_by_default():
+    from safetynet.core.types import Action
+
+    text = "your picture: ![out](http://evil.example/p.png)"
+    sc = ImageModerationScanner(backend=_BlockVision())  # fetch_urls defaults to False
+    v = sc.scan(Action("agent", "generate_text", text), Context())
+    assert v.decision is not Decision.BLOCK            # URL present but NOT fetched (no SSRF)
+    assert "fetching disabled" in v.rationale
+
+
+def test_image_moderation_ssrf_allowlist_blocks_unlisted_host():
+    from safetynet.scanners.image_moderation import _host_allowed
+
+    allow = ("localhost", "host.docker.internal")
+    assert _host_allowed("http://localhost/files/x.png", allow) is True
+    assert _host_allowed("http://169.254.169.254/latest/meta-data", allow) is False
+    assert _host_allowed("file:///etc/passwd", allow) is False
+    assert _host_allowed("http://localhost/x.png", ()) is False  # empty allowlist => never fetch
+
+
+def test_image_moderation_finds_dify_message_files():
+    from safetynet.core.types import Action
+    from safetynet.scanners.image_moderation import _find_image_refs
+
+    action = Action("agent", "generate_text", "done", metadata={
+        "output": {"answer": "done", "message_files": [{"type": "image", "url": "http://localhost/files/a.png"}]}
+    })
+    refs = _find_image_refs(action)
+    assert "http://localhost/files/a.png" in refs

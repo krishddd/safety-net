@@ -52,6 +52,17 @@ def test_unsafe_agent_response_blocked_at_post(policy, tmp_path, monkeypatch):
     assert result.response is None          # withheld
 
 
+def test_dify_image_policy_builds_and_runs(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    from safetynet.core.policy import load_policy
+
+    img_policy = load_policy(ROOT / "policies" / "dify_image_guard.yaml")
+    guarded = build_guarded_agent(img_policy, StubAgentClient())
+    # A benign reply with no image -> image_moderation is a no-op; run passes.
+    result = guarded.invoke("draw a friendly robot in a meadow")
+    assert result.allowed is True
+
+
 def test_upstream_error_fails_closed(policy, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
 
