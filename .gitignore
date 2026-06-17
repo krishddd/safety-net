@@ -24,6 +24,9 @@ logs/*.log.*
 # Local secrets / runtime config (compose reads .env automatically)
 .env
 
+# Cached evaluation datasets (downloaded on demand)
+benchmark_cache/
+
 # OS / editor
 .DS_Store
 Thumbs.db

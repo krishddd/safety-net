@@ -155,6 +155,15 @@ python -m safetynet.benchmark --dataset r-judge.jsonl --format rjudge   # real d
 Reports accuracy / precision / recall / F1 + confusion, with `--block-only` for refusals vs.
 flags. See [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
 
+**Honest baseline (real data):** on the third-party deepset/prompt-injections set (662 prompts)
+the dependency-free `pattern` backend gets **precision 1.00 but recall 0.16** — it misses ~84% of
+real (paraphrased / multilingual) injections. Reproduce and compare against the model backend:
+```bash
+python -m safetynet.benchmark.injection_eval --dataset deepset --backend pattern
+python -m safetynet.benchmark.injection_eval --dataset deepset --backend promptguard   # needs [guard]
+```
+**Don't ship the keyword scanners alone** — enable a model backend for real coverage.
+
 ## License
 
 Apache-2.0. See [`LICENSE`](LICENSE).

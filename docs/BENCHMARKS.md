@@ -4,6 +4,32 @@ The harness measures how well SafetyNet's gate (ethics engine + scanners) detect
 content on labeled scenarios. It is the evaluation hook called for in the research reference
 (R-Judge arXiv:2401.10019, Agent-SafetyBench arXiv:2412.14470).
 
+## Honest baseline on REAL data (read this first)
+
+The bundled samples below are tuned and report ~100% — that number is **not** evidence of real
+performance. For an honest measurement, `safetynet.benchmark.injection_eval` runs an injection
+backend over the third-party **deepset/prompt-injections** dataset (662 labeled prompts, incl.
+paraphrased / multilingual / role-play injections).
+
+Result for the dependency-free **`pattern`** backend (the default), reproduced with
+`python -m safetynet.benchmark.injection_eval --dataset deepset --backend pattern`:
+
+| backend | n | accuracy | precision | recall | F1 | confusion |
+|---|---|---|---|---|---|---|
+| `pattern` (keywords) | 662 | 0.665 | **1.000** | **0.156** | 0.270 | TP41 FP0 TN399 FN222 |
+
+**Takeaway:** the keyword heuristic is high-precision but **catches only ~16% of real
+injections** — it reliably flags "ignore previous instructions" but misses paraphrases
+("forget about all the previous orders"), role-play, and non-English attacks. **Do not ship the
+default scanners alone.** Enable the model backend and re-run the same command to compare:
+
+```bash
+pip install '.[guard]'          # transformers + torch + the PromptGuard weights
+python -m safetynet.benchmark.injection_eval --dataset deepset --backend promptguard
+```
+
+(`--dataset` also accepts a local `.parquet`/`.jsonl`/`.csv`; needs the `[eval]` extra for parquet.)
+
 ## What it measures
 
 Each scenario carries a boolean `expected_unsafe` label. SafetyNet evaluates the text through a
