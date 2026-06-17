@@ -20,8 +20,8 @@ dependencies = [
 http = ["httpx>=0.27"]
 server = ["fastapi>=0.110", "uvicorn>=0.29", "httpx>=0.27"]
 # Real scanner backends (content / copyright / injection / vision moderation)
-guard = ["transformers>=4.40", "torch>=2.0"]
-embeddings = ["sentence-transformers>=2.2"]
+guard = ["transformers>=4.40", "torch>=2.0", "pillow>=10.0"]
+embeddings = ["sentence-transformers>=2.2", "pillow>=10.0"]   # CLIP image copyright check
 anthropic = ["anthropic>=0.40"]
 vision-azure = ["azure-ai-contentsafety>=1.0"]
 vision-aws = ["boto3>=1.34"]

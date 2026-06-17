@@ -5,9 +5,11 @@
 #
 # The default `null` vision backend only proves the fetch/decode plumbing — swap to a real
 # backend for actual moderation:
-#   backend: nsfw        (local model, needs the [guard] extra: transformers + Pillow)
+#   backend: nsfw        (local NSFW model, needs the [guard] extra: transformers + Pillow)
 #   backend: azure       (Azure AI Content Safety, needs [vision-azure] + env keys)
 #   backend: rekognition (AWS Rekognition, needs [vision-aws] + AWS creds)
+#   backend: clip        (image-level copyright reproduction vs reference images, [embeddings];
+#                         set reference_dir: /path/to/protected-works for it to detect anything)
 version: "0.1.0"
 
 ethics:

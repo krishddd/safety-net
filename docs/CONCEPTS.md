@@ -51,8 +51,10 @@ below was verified to resolve and to match its described use (see "Citation note
 
 R-Judge (arXiv:2401.10019) and Agent-SafetyBench (arXiv:2412.14470) are wired into the
 benchmark harness (`safetynet.benchmark`, see [BENCHMARKS.md](BENCHMARKS.md)) with tolerant
-loaders; the Copyright Infringement Benchmark (arXiv:2403.12052) for the visual nodes remains
-a follow-up.
+loaders. The Copyright Infringement Benchmark (arXiv:2403.12052) is addressed at two levels: a
+text-prompt sample in the harness, and **image-level** CLIP-similarity detection via the `clip`
+vision backend (`CLIPCopyrightBackend`) — embed the generated image, compare to reference
+protected-work images, flag high similarity.
 
 ## Citation notes (from the verification pass)
 

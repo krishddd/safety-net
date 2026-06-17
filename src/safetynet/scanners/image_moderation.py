@@ -214,11 +214,86 @@ class TransformersNSFWBackend:
         return VisionResult(unsafe_score=unsafe, categories=["nsfw"] if unsafe >= 0.5 else [], detail=f"nsfw score {unsafe:.2f}")
 
 
+class CLIPCopyrightBackend:
+    """Image-level copyright-reproduction detector via CLIP similarity (arXiv:2403.12052).
+
+    Embeds the generated image and compares it (cosine similarity) against reference images of
+    protected works; high similarity ⇒ likely reproduction ⇒ unsafe. Optional ``[embeddings]``
+    extra (sentence-transformers ships a CLIP model). The model + reference embeddings load lazily
+    on first use, so construction is cheap and testable.
+
+    Provide references via ``reference_dir`` (a folder of protected-work images) or
+    ``reference_paths`` (a list). With no references it cannot judge and returns *safe* with a note.
+    """
+
+    name = "clip"
+
+    def __init__(
+        self,
+        reference_dir: str | None = None,
+        reference_paths: list[str] | None = None,
+        model: str = "clip-ViT-B-32",
+        threshold: float = 0.85,
+    ) -> None:
+        try:
+            import sentence_transformers  # noqa: F401
+        except ImportError as exc:  # pragma: no cover - exercised only without the extra
+            raise ImportError(
+                "CLIPCopyrightBackend requires the optional 'embeddings' extra. "
+                "Install with: pip install '.[embeddings]'"
+            ) from exc
+        self.model_name = model
+        self.threshold = threshold
+        self.reference_dir = reference_dir
+        self.reference_paths = list(reference_paths or [])
+        self._model = None
+        self._ref_emb = None
+
+    def _ensure_ready(self):  # pragma: no cover - needs the model + images
+        if self._model is not None:
+            return
+        import glob
+        import os
+
+        from PIL import Image
+        from sentence_transformers import SentenceTransformer
+
+        self._model = SentenceTransformer(self.model_name)
+        paths = list(self.reference_paths)
+        if self.reference_dir:
+            for ext in ("png", "jpg", "jpeg", "webp", "bmp", "gif"):
+                paths += glob.glob(os.path.join(self.reference_dir, f"*.{ext}"))
+        imgs = []
+        for p in paths:
+            try:
+                imgs.append(Image.open(p).convert("RGB"))
+            except Exception:  # noqa: BLE001
+                logger.warning("could not load reference image %s", p)
+        self._ref_emb = self._model.encode(imgs, convert_to_tensor=True, normalize_embeddings=True) if imgs else None
+
+    def moderate(self, image: bytes) -> VisionResult:  # pragma: no cover - needs the model
+        import io
+
+        from PIL import Image
+        from sentence_transformers import util
+
+        self._ensure_ready()
+        if self._ref_emb is None:
+            return VisionResult(unsafe_score=0.0, detail="no protected reference images configured")
+        img = Image.open(io.BytesIO(image)).convert("RGB")
+        q = self._model.encode([img], convert_to_tensor=True, normalize_embeddings=True)
+        best = float(util.cos_sim(q, self._ref_emb).max())
+        unsafe = best if best >= self.threshold else best * 0.3
+        cats = ["copyright_reproduction"] if best >= self.threshold else []
+        return VisionResult(unsafe_score=max(0.0, min(1.0, unsafe)), categories=cats, detail=f"max CLIP similarity {best:.2f}")
+
+
 BACKEND_REGISTRY: dict[str, type] = {
     "null": NullVisionBackend,
     "azure": AzureVisionBackend,
     "rekognition": RekognitionBackend,
     "nsfw": TransformersNSFWBackend,
+    "clip": CLIPCopyrightBackend,
 }
 
 

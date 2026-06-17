@@ -20,6 +20,7 @@ from .copyright_backends import (
 )
 from .image_moderation import (
     AzureVisionBackend,
+    CLIPCopyrightBackend,
     ImageModerationScanner,
     NullVisionBackend,
     RekognitionBackend,
@@ -75,5 +76,6 @@ __all__ = [
     "AzureVisionBackend",
     "RekognitionBackend",
     "TransformersNSFWBackend",
+    "CLIPCopyrightBackend",
     "build_vision_backend",
 ]

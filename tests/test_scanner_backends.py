@@ -119,9 +119,22 @@ def test_image_moderation_injected_backend_blocks():
 
 
 def test_vision_registry_and_unknown():
-    assert {"null", "azure", "rekognition", "nsfw"} <= set(VIS_REG)
+    assert {"null", "azure", "rekognition", "nsfw", "clip"} <= set(VIS_REG)
     with pytest.raises(ValueError):
         build_vision_backend("nope")
+
+
+def test_clip_backend_import_guarded():
+    from safetynet.scanners.image_moderation import CLIPCopyrightBackend
+
+    try:
+        import sentence_transformers  # noqa: F401
+    except ImportError:
+        with pytest.raises(ImportError):
+            CLIPCopyrightBackend()
+        return
+    # If the extra is installed, construction is cheap (model loads lazily) and exposes the name.
+    assert CLIPCopyrightBackend().name == "clip"
 
 
 # --- image moderation: response image extraction / fetch / SSRF -----------------------------
