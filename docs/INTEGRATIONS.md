@@ -71,12 +71,14 @@ UPSTREAM_TYPE=dify UPSTREAM_URL=http://localhost UPSTREAM_API_KEY=app-XXXXXXXX \
   uvicorn safetynet.server.app:app --host 0.0.0.0 --port 8000
 ```
 
-*Option B — gateway in Docker (reaches Dify via host.docker.internal):*
+*Option B — gateway in Docker (recommended; reaches Dify via host.docker.internal):*
 ```bash
 cd /path/to/safety-net
-UPSTREAM_TYPE=dify UPSTREAM_URL=http://host.docker.internal UPSTREAM_API_KEY=app-XXXXXXXX \
-  docker compose up --build
+cp .env.example .env            # then edit .env: set UPSTREAM_API_KEY=app-XXXXXXXX
+docker compose up --build       # compose auto-loads .env; gateway on :8000
 ```
+`.env` already defaults `UPSTREAM_TYPE=dify` and `UPSTREAM_URL=http://host.docker.internal`, so
+only the API key needs filling in. Audit logs land in `./output` on the host (mounted volume).
 
 **4. Send traffic to SafetyNet (:8000), not to Dify.**
 
