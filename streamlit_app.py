@@ -6,8 +6,8 @@ output is checked again, and the reply shows exactly where and why anything gets
 Conversation history is kept for the session.
 
 Run it (from a clone of this repo):
-    pip install -r requirements-demo.txt      # or:  pip install -e ".[demo]"
-    streamlit run streamlit_app.py
+    pip install -r requirements-demo.txt           # or:  pip install -e ".[demo]"
+    python -m streamlit run streamlit_app.py       # `streamlit run ...` works too if on PATH
 
 The SafetyNet guard library is imported from this repo's src/. Models (SD-Turbo, Qwen, the
 Falconsai NSFW classifier) load lazily on first use and are cached for the session.

@@ -48,8 +48,8 @@ prompt, SafetyNet checks it, the model runs only if it's safe, and the result (i
 checked again — with the block reason shown when something is refused.
 
 ```bash
-pip install -r requirements-demo.txt        # or:  pip install -e ".[demo]"
-streamlit run streamlit_app.py
+pip install -r requirements-demo.txt           # or:  pip install -e ".[demo]"
+python -m streamlit run streamlit_app.py       # `streamlit run ...` also works if Scripts/ is on PATH
 ```
 
 Mirrors [`notebooks/guardrails_poc.ipynb`](notebooks/guardrails_poc.ipynb). Models download on
@@ -105,19 +105,31 @@ else:
 ## Layout
 
 ```
-src/safetynet/
-  core/        types (band/Verdict/Action/Context), policy, gate, circuit_breaker, audit, tracing, logging
-  ethics/      deontology, consequentialism, aggregator (stances), engine
-  scanners/    content_safety, copyright, prompt_injection, pii, character_bible, image_moderation
+safety-net/
+  streamlit_app.py       ←  the interactive chat demo  (python -m streamlit run streamlit_app.py)
+  requirements-demo.txt  ←  deps to run the demos
+  requirements*.txt         core (lean) + dev deps;  pyproject.toml = packaging + extras
+  src/safetynet/         ←  THE PRODUCT (the guard library the demo & gateway both use)
+    core/      types (band/Verdict/Action/Context), policy, gate, circuit_breaker, audit, tracing
+    ethics/    deontology, consequentialism, aggregator (stances), engine
+    scanners/  content_safety, copyright, prompt_injection, pii, character_bible, image_moderation
                (+ pluggable backends; normalize.py defeats character-injection evasion)
-  clients/     AgentClient, StubAgentClient, HTTP/OpenAI clients, presets (nemo/langgraph/dify/crewai)
-  guard.py     GuardedAgent gateway + build_guarded_agent()
-  server/      FastAPI gateway app (/health, /guard, /v1/chat/completions)
-  benchmark/   harness + loaders (R-Judge / Agent-SafetyBench) + offline samples
-policies/      default.yaml, character_bible.yaml
-examples/      run_guard.py, run_benchmark.py
-Dockerfile · docker-compose.yml
+    clients/   AgentClient, StubAgentClient, HTTP/OpenAI clients, presets (nemo/langgraph/dify/crewai)
+    guard.py   GuardedAgent gateway + build_guarded_agent()
+    server/    FastAPI gateway app (/health, /guard, /v1/chat/completions)
+    benchmark/ harness + dataset loaders + offline samples
+  notebooks/   guardrails_poc.ipynb  — the step-by-step walkthrough
+  policies/    default.yaml, character_bible.yaml — sample YAML policies
+  examples/    run_guard.py, run_benchmark.py
+  docs/        architecture · ethics engine · threat model · integrations · deployment
+  tests/       pytest suite
+  Dockerfile · docker-compose.yml — containerised gateway
+  logs/ · output/ — runtime artifacts (git-ignored; safe to delete)
 ```
+
+**Just want to run the Streamlit demo?** It needs only three things:
+`streamlit_app.py`, the `src/safetynet/` library, and `requirements-demo.txt`. Everything else
+(`docs/`, `examples/`, `notebooks/`, `tests/`, `server/`, Docker) is optional.
 
 ## Design guarantees
 
