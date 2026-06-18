@@ -41,6 +41,20 @@ A single `band(score)` helper is the sole authority mapping a continuous safety 
 `BLOCK / FLAG / ALLOW` decision. Full semantics + worked example:
 [`docs/ETHICS_ENGINE.md`](docs/ETHICS_ENGINE.md).
 
+## Interactive demo (Streamlit)
+
+A small web UI that guards a live **image** agent (SD-Turbo) and **script** agent (Qwen): type a
+prompt, SafetyNet checks it, the model runs only if it's safe, and the result (image or text) is
+checked again — with the block reason shown when something is refused.
+
+```bash
+pip install streamlit diffusers transformers accelerate torch
+streamlit run streamlit_app.py
+```
+
+Mirrors [`notebooks/guardrails_poc.ipynb`](notebooks/guardrails_poc.ipynb). Models download on
+first use; a GPU is faster but CPU works.
+
 ## Run the gateway (Docker)
 
 ```bash
