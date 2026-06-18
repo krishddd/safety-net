@@ -5,8 +5,8 @@ for each one SafetyNet checks it, the agent (image or script) runs **only if it'
 output is checked again, and the reply shows exactly where and why anything gets blocked.
 Conversation history is kept for the session.
 
-Run it:
-    pip install streamlit diffusers transformers accelerate torch   # (+ nemoguardrails, optional)
+Run it (from a clone of this repo):
+    pip install -r requirements-demo.txt      # or:  pip install -e ".[demo]"
     streamlit run streamlit_app.py
 
 The SafetyNet guard library is imported from this repo's src/. Models (SD-Turbo, Qwen, the

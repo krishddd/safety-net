@@ -1,0 +1,24 @@
+# Dependencies for the interactive demos:
+#   - streamlit_app.py            ->  streamlit run streamlit_app.py
+#   - notebooks/guardrails_poc.ipynb
+#
+# Run from a clone of this repo (the app imports SafetyNet from ./src — no need to install the
+# package itself). A GPU is faster but NOT required; the models download on first use.
+#
+#   pip install -r requirements-demo.txt
+#
+-r requirements.txt          # PyYAML (SafetyNet core)
+
+streamlit>=1.52              # chat UI (uses the width="stretch" API)
+torch>=2.0
+transformers>=4.40           # writer LLM (Qwen) + Falconsai NSFW image classifier
+diffusers>=0.27              # SD-Turbo image agent
+accelerate>=0.30
+pillow>=10.0
+
+# --- Optional: run the writer on NVIDIA NeMo Guardrails (notebook) -----------------------------
+# On Linux/Colab these install from wheels. On Windows, nemoguardrails pulls `annoy`, which needs
+# a C++ build toolchain; without it the writer simply falls back to the raw LLM (still guarded).
+#   pip install nemoguardrails langchain-community
+# nemoguardrails>=0.11
+# langchain-community>=0.3

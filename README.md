@@ -48,12 +48,13 @@ prompt, SafetyNet checks it, the model runs only if it's safe, and the result (i
 checked again — with the block reason shown when something is refused.
 
 ```bash
-pip install streamlit diffusers transformers accelerate torch
+pip install -r requirements-demo.txt        # or:  pip install -e ".[demo]"
 streamlit run streamlit_app.py
 ```
 
 Mirrors [`notebooks/guardrails_poc.ipynb`](notebooks/guardrails_poc.ipynb). Models download on
-first use; a GPU is faster but CPU works.
+first use; a GPU is faster but CPU works. To run the notebook's writer on **NVIDIA NeMo
+Guardrails**, also `pip install nemoguardrails langchain-community` (or `pip install -e ".[nemo]"`).
 
 ## Run the gateway (Docker)
 
