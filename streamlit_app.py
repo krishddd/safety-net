@@ -34,16 +34,39 @@ from safetynet.guard import GuardedAgent, build_ethics_engine, build_scanners  #
 from safetynet.scanners.image_moderation import ImageModerationScanner  # noqa: E402
 
 # =============================================================================================
-# Policy — identical to the notebook (ethics off; scanners do the work).
+# Policy — scanners + the ethics engine (deontology can *arrest* consequentialism).
+# Duties/terms are tuned for a film-studio context (script + concept-art agents).
 # =============================================================================================
 POLICY = {
     "version": "0.1.0-streamlit",
     "ethics": {
-        "stance": "deontology_veto",
+        "stance": "deontology_veto",   # a broken duty vetoes an otherwise-favourable harm/benefit score
         "human_review_on_flag": True,
         "frameworks": {
-            "deontology": {"enabled": False, "weight": 0.5, "duties": []},
-            "consequentialism": {"enabled": False, "weight": 0.5},
+            "deontology": {
+                "enabled": True, "weight": 0.5,
+                "duties": [
+                    {"id": "no_deception_of_minors",
+                     "description": "A character must not deceive or lie to a child.",
+                     "forbidden_substrings": ["lie to a child", "lies to a child", "lying to a child",
+                                              "deceive a child", "deceiving a child", "trick the child"]},
+                    {"id": "no_real_world_harm_instructions",
+                     "description": "No working real-world harm instructions, even as a 'prop'.",
+                     "forbidden_substrings": ["how to build a bomb", "make a real weapon",
+                                              "synthesize poison", "working pipe bomb"]},
+                    {"id": "no_protected_ip",
+                     "description": "Do not reproduce protected third-party characters/worlds.",
+                     "forbidden_substrings": ["captain sprocket", "glimmertown"]},
+                ],
+            },
+            "consequentialism": {
+                "enabled": True, "weight": 0.5,
+                "harm_threshold": 0.5, "baseline_harm": 0.0,
+                "harm_terms": {"gore": 0.6, "graphic violence": 0.6, "cruelty": 0.5,
+                               "torture": 0.6, "terrifying": 0.3},
+                "benefit_terms": {"heartwarming": 0.4, "educational": 0.4, "comfort": 0.3,
+                                  "redemption": 0.3, "wholesome": 0.3},
+            },
         },
     },
     "scanners": {
@@ -181,6 +204,7 @@ def run_pipeline(mode: str, prompt: str, auto_redact: bool) -> dict:
         "blocked_stage": None,
         "halt_reason": None,
         "verdicts": [],
+        "frameworks": [],
         "image": None,
         "text": None,
     }
@@ -195,10 +219,14 @@ def run_pipeline(mode: str, prompt: str, auto_redact: bool) -> dict:
     turn["blocked_stage"] = result.blocked_stage
     turn["halt_reason"] = result.halt_reason
     for nr in result.node_results:
-        rows = [(v.source, v.decision, v.rationale) for v in nr.scanner_verdicts]
-        if rows:
-            stage = "Input gate (prompt)" if nr.stage.value == "pre" else "Output gate (result)"
-            turn["verdicts"].append((stage, rows))
+        stage = "Input gate (prompt)" if nr.stage.value == "pre" else "Output gate (result)"
+        scan_rows = [(v.source, v.decision, v.rationale) for v in nr.scanner_verdicts]
+        if scan_rows:
+            turn["verdicts"].append((stage, scan_rows))
+        fw_rows = [(v.source, v.decision, v.rationale, getattr(v, "deontic", False))
+                   for v in nr.framework_verdicts]
+        if fw_rows:
+            turn["frameworks"].append((stage, fw_rows))
     if result.allowed:
         if is_artist:
             turn["image"] = result.response.raw["pil"]
@@ -241,7 +269,16 @@ def render_turn(turn: dict) -> None:
                 f"<td style='padding:2px 10px;color:#555'>{rat[:90]}</td></tr>"
                 for src, dec, rat in rows
             )
-            st.markdown(f"**{stage}**")
+            st.markdown(f"**{stage} — scanners**")
+            st.markdown(f"<table style='font-size:0.9rem'>{html}</table>", unsafe_allow_html=True)
+        for stage, rows in turn.get("frameworks", []):
+            html = "".join(
+                f"<tr><td style='padding:2px 10px'>{src}{' 🛡️ duty' if deontic else ''}</td>"
+                f"<td style='padding:2px 10px'>{_badge(dec)}</td>"
+                f"<td style='padding:2px 10px;color:#555'>{rat[:90]}</td></tr>"
+                for src, dec, rat, deontic in rows
+            )
+            st.markdown(f"**{stage} — ⚖️ ethics** *(a duty BLOCK arrests a favourable score)*")
             st.markdown(f"<table style='font-size:0.9rem'>{html}</table>", unsafe_allow_html=True)
 
 
@@ -275,6 +312,7 @@ def main() -> None:
             if s.enabled:
                 st.markdown(f"- {n}")
         st.markdown("- image_moderation *(artist output)*")
+        st.markdown(f"- ⚖️ ethics *(stance: `{get_policy().stance}`)*")
         st.divider()
         if st.button("🗑️ Clear chat", width="stretch"):
             st.session_state.messages = []
