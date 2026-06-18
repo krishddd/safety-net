@@ -161,12 +161,20 @@ class WriterAgent:
 
 @st.cache_resource(show_spinner="Loading safety guards (incl. NSFW image classifier)…")
 def artist_guard():
+    """Build the artist guard. If the NSFW model/extra is unavailable, degrade to no output
+    image moderation rather than crashing — text checks + generation still work."""
     pol = get_policy()
-    scanners = build_scanners(pol) + [
-        (ImageModerationScanner(backend="nsfw", applies_to_kinds=("generate_image",)), Decision.BLOCK)
-    ]
-    return GuardedAgent(ArtAgent(), build_ethics_engine(pol), scanners, pol,
-                        node_id="artist", kind="generate_image")
+    scanners = build_scanners(pol)
+    moderation_on = True
+    try:
+        scanners = scanners + [
+            (ImageModerationScanner(backend="nsfw", applies_to_kinds=("generate_image",)), Decision.BLOCK)
+        ]
+    except Exception:  # noqa: BLE001 — NSFW classifier couldn't load; keep the demo alive
+        moderation_on = False
+    guard = GuardedAgent(ArtAgent(), build_ethics_engine(pol), scanners, pol,
+                         node_id="artist", kind="generate_image")
+    return guard, moderation_on
 
 
 @st.cache_resource(show_spinner=False)
@@ -207,9 +215,13 @@ def run_pipeline(mode: str, prompt: str, auto_redact: bool) -> dict:
         "frameworks": [],
         "image": None,
         "text": None,
+        "moderation_on": True,
     }
     try:
-        guard = artist_guard() if is_artist else writer_guard()
+        if is_artist:
+            guard, turn["moderation_on"] = artist_guard()
+        else:
+            guard = writer_guard()
         result = guard.invoke(checked)
     except Exception as exc:  # noqa: BLE001
         turn["error"] = str(exc)
@@ -239,7 +251,8 @@ def render_turn(turn: dict) -> None:
     """Render one assistant turn: the decision, the output (or why none), and the checks."""
     if turn.get("error"):
         st.error(f"Couldn't run this one: {turn['error']}")
-        st.caption("Models need: `pip install diffusers transformers accelerate torch`")
+        st.caption("The model libraries aren't installed **in the environment running Streamlit**. "
+                   "From that same env run:  `python -m pip install -r requirements-demo.txt`")
         return
 
     if turn["redacted"] is not None:
@@ -249,6 +262,9 @@ def render_turn(turn: dict) -> None:
         st.success("✅ ALLOWED — passed every check")
         if turn["kind"] == "image" and turn["image"] is not None:
             st.image(turn["image"], width="stretch")
+            if not turn.get("moderation_on", True):
+                st.caption("⚠️ Output NSFW moderation is disabled (classifier couldn't load) — "
+                           "prompt-side checks still ran. Install `transformers` to enable it.")
         elif turn["text"]:
             st.markdown(turn["text"])
     else:
