@@ -41,14 +41,24 @@ image classifier on the artist's output.
    evasion folding (homoglyph/zero-width/leet/base64). **No ethics section.**
 9. Wrap-up.
 
-## Validation (done in the dev env, no torch/nemo here)
-- All 18 logic cells compile; the 30 `%%writefile` cells reconstruct a working `safetynet` package
-  importable with **only PyYAML** (verified by extracting them to a temp dir and running a guard —
-  benign allowed, jailbreak blocked). This is exactly the Colab path.
-- Guard flow exercised with stubbed models/NeMo/NSFW: happy-path ALLOW (+image), writer jailbreak →
-  PRE BLOCK, artist IP → PRE BLOCK, PII block→redact→pass, all six evasion disguises BLOCK.
-- The **NeMo init cell** can't be verified here (nemoguardrails not installed); it's wrapped in
-  try/except with a direct-LLM fallback, so a NeMo version/config hiccup degrades gracefully.
+## Validation — ran end-to-end with REAL models (2026-06-18)
+Installed torch/transformers/diffusers/nemoguardrails locally (CPU) and executed every notebook
+cell. Result: **`errors: NONE — ran clean`, `NEMO_OK = True`.** Confirmed:
+- Writer (Qwen) produced a real script; Artist (SD-Turbo) generated two real 512×512 PNGs.
+- WRITER jailbreak → PRE BLOCK (prompt_injection); ARTIST protected-IP → PRE BLOCK (copyright).
+- ARTIST output moderated by the **real Falconsai NSFW classifier** at POST.
+- PII → BLOCK; redacted → ALLOW. All six evasion disguises → BLOCK.
+- NeMo init (`RailsConfig`/`LLMRails` over the Qwen HF pipeline) works; `rails.generate()` returns
+  a dict so `out["content"]` parsing is correct.
+
+### Env gotchas learned (Windows dev box)
+- This env monkeypatches `random.choice` → `None` (determinism guard); it breaks pip's temp-name
+  generator. Install with `pip install --user ...` to bypass pip's writable-dir check.
+- `annoy` (a NeMo dep for embedding intent-matching) needs a C++ compiler and **won't build on
+  Windows**, so NeMo's `generate` returns its generic apology here. On **Colab/Linux annoy installs
+  from a wheel**, so NeMo generates natively. `nemo_write()` was hardened to fall back to the raw
+  LLM when NeMo returns an empty/"internal error" response (not just on exception), so the writer
+  always returns a real script regardless of environment.
 
 ## Where to take it next
 - Point the guards at the team's real Dify/LangGraph apps instead of the local models.
